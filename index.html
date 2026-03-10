@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viseo University · ABAP Formation</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Syne',sans-serif}
+
+/* ─── SIDEBAR ─── */
+#sidebar{
+  position:fixed;inset:0 auto 0 0;
+  width:220px;
+  background:#060D1A;
+  border-right:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;
+  z-index:100;
+  transition:width .3s cubic-bezier(.4,0,.2,1);
+}
+#sidebar.collapsed{width:56px}
+
+/* Logo */
+.sb-logo{
+  padding:20px 16px 16px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  flex-shrink:0;overflow:hidden;
+}
+.sb-logo-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,#2563EB,#60A5FA);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(37,99,235,.4);
+}
+.sb-logo-text{overflow:hidden;white-space:nowrap;transition:opacity .2s}
+.sb-logo-title{font-size:13px;font-weight:700;color:#E2E8F0;letter-spacing:.01em;line-height:1.1}
+.sb-logo-sub{font-size:9px;font-weight:500;color:#475569;letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+#sidebar.collapsed .sb-logo-text{opacity:0;pointer-events:none}
+
+/* Nav items */
+.sb-section{padding:12px 8px 6px;flex-shrink:0}
+.sb-section-label{
+  font-size:8px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:#2D4A6B;padding:0 8px 6px;white-space:nowrap;overflow:hidden;
+  transition:opacity .2s;
+}
+#sidebar.collapsed .sb-section-label{opacity:0}
+
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:0 8px}
+
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  cursor:pointer;transition:all .18s;
+  position:relative;overflow:hidden;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.nav-item:hover{background:rgba(255,255,255,.05)}
+.nav-item.active{background:rgba(37,99,235,.15);border:1px solid rgba(59,130,246,.2)}
+.nav-item.active .nav-icon{color:#60A5FA}
+.nav-item.active .nav-label{color:#93C5FD}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;
+  width:3px;border-radius:0 2px 2px 0;background:#3B82F6;
+}
+
+.nav-icon{
+  width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;color:#475569;transition:color .18s;
+}
+.nav-label{font-size:12px;font-weight:600;color:#64748B;transition:all .2s;overflow:hidden}
+.nav-label span{display:block;font-size:9px;font-weight:400;color:#374151;margin-top:1px}
+.nav-item:hover .nav-label{color:#94A3B8}
+#sidebar.collapsed .nav-label{opacity:0;width:0}
+
+/* Tooltip on collapse */
+#sidebar.collapsed .nav-item{justify-content:center;padding:10px}
+.nav-tooltip{
+  position:absolute;left:calc(100% + 12px);
+  background:#0F172A;border:1px solid rgba(255,255,255,.1);
+  color:#E2E8F0;font-size:11px;font-weight:600;
+  padding:5px 10px;border-radius:6px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .15s;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+#sidebar.collapsed .nav-item:hover .nav-tooltip{opacity:1}
+
+/* Bottom collapse button */
+.sb-toggle{
+  margin-top:auto;padding:12px 8px;border-top:1px solid rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.toggle-btn{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  color:#475569;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:14px;transition:all .2s;
+}
+.toggle-btn:hover{background:rgba(255,255,255,.08);color:#94A3B8}
+
+/* Progress indicators */
+.nav-progress{
+  margin-left:auto;width:6px;height:6px;border-radius:50%;
+  background:#1E3A5F;flex-shrink:0;transition:all .2s;
+}
+.nav-item.active .nav-progress{background:#3B82F6;box-shadow:0 0 6px #3B82F6}
+#sidebar.collapsed .nav-progress{display:none}
+
+/* ─── MAIN CONTENT ─── */
+#content{
+  position:fixed;inset:0 0 0 220px;
+  transition:left .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+body.collapsed #content{left:56px}
+
+/* Top bar */
+#topbar{
+  height:48px;background:rgba(6,13,26,.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+}
+.tb-breadcrumb{display:flex;align-items:center;gap:7px;font-size:12px}
+.tb-bc-root{color:#475569;font-weight:500}
+.tb-bc-sep{color:#1E3A5F;font-size:10px}
+.tb-bc-page{color:#93C5FD;font-weight:600}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-badge{
+  padding:3px 10px;border-radius:100px;
+  font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:rgba(37,99,235,.15);border:1px solid rgba(59,130,246,.2);color:#60A5FA;
+}
+.tb-badge.live{background:rgba(5,150,105,.15);border-color:rgba(16,185,129,.2);color:#34D399;animation:livepulse 2s infinite}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* iframe wrapper */
+#frame-wrap{flex:1;position:relative;overflow:hidden}
+iframe#app-frame{
+  width:100%;height:100%;border:none;
+  opacity:0;transition:opacity .3s;
+}
+iframe#app-frame.loaded{opacity:1}
+
+/* ─── HOME SCREEN ─── */
+#home-screen{
+  position:absolute;inset:0;
+  background:#060D1A;
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+  align-items:center;
+  padding:60px 40px;
+  gap:0;
+}
+
+/* Animated background */
+.home-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.h-blob{position:absolute;border-radius:50%;filter:blur(100px);opacity:.08}
+.h-blob1{width:700px;height:700px;background:#2563EB;top:-300px;right:-200px;animation:bdrift 20s ease-in-out infinite}
+.h-blob2{width:500px;height:500px;background:#0EA5E9;bottom:-200px;left:-150px;animation:bdrift 25s ease-in-out infinite reverse}
+.h-blob3{width:300px;height:300px;background:#6366F1;top:40%;left:40%;animation:bdrift 15s ease-in-out infinite 5s}
+@keyframes bdrift{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,-30px)}}
+
+/* Grid noise texture overlay */
+.home-bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size:32px 32px;
+}
+
+.home-content{position:relative;z-index:1;width:100%;max-width:900px;display:flex;flex-direction:column;align-items:center;gap:48px}
+
+/* Hero */
+.hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:5px 14px;border-radius:100px;
+  background:rgba(37,99,235,.12);border:1px solid rgba(59,130,246,.2);
+  font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#60A5FA;
+  animation:fadeUp .6s ease forwards;opacity:0;
+}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:#3B82F6;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-title{
+  font-size:clamp(36px,5vw,56px);font-weight:800;
+  color:#E2E8F0;line-height:1.05;letter-spacing:-.02em;
+  animation:fadeUp .6s ease .1s forwards;opacity:0;
+}
+.hero-title em{
+  font-style:normal;
+  background:linear-gradient(135deg,#60A5FA,#3B82F6,#2563EB);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  font-size:15px;color:#64748B;max-width:480px;line-height:1.65;font-weight:400;
+  animation:fadeUp .6s ease .2s forwards;opacity:0;
+}
+.hero-sub b{color:#94A3B8;font-weight:600}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Stats row */
+.stats-row{
+  display:flex;gap:24px;flex-wrap:wrap;justify-content:center;
+  animation:fadeUp .6s ease .3s forwards;opacity:0;
+}
+.stat{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:12px 20px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:10px;
+}
+.stat-n{font-size:22px;font-weight:800;color:#E2E8F0}
+.stat-l{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#475569}
+
+/* Cards grid */
+.cards-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:100%;
+  animation:fadeUp .6s ease .4s forwards;opacity:0;
+}
+.module-card{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:24px;
+  cursor:pointer;transition:all .25s;
+  display:flex;flex-direction:column;gap:14px;
+  position:relative;overflow:hidden;
+}
+.module-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 60%);
+  pointer-events:none;
+}
+.module-card:hover{
+  border-color:rgba(59,130,246,.3);
+  background:rgba(37,99,235,.06);
+  transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(37,99,235,.15);
+}
+.module-card.featured{
+  border-color:rgba(59,130,246,.2);
+  background:rgba(37,99,235,.05);
+}
+.card-icon{
+  width:44px;height:44px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+}
+.icon-blue{background:rgba(37,99,235,.15);border:1px solid rgba(59,130,246,.2)}
+.icon-teal{background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.2)}
+.icon-violet{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.2)}
+
+.card-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px;align-self:flex-start;
+}
+.tag-blue{background:rgba(37,99,235,.15);color:#60A5FA}
+.tag-teal{background:rgba(14,165,233,.12);color:#38BDF8}
+.tag-violet{background:rgba(99,102,241,.12);color:#A5B4FC}
+.tag-live{background:rgba(5,150,105,.15);color:#34D399}
+
+.card-title{font-size:16px;font-weight:700;color:#E2E8F0;line-height:1.2}
+.card-desc{font-size:12px;color:#475569;line-height:1.6;font-weight:400}
+.card-meta{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:10px;border-top:1px solid rgba(255,255,255,.05);
+}
+.card-slides{font-family:'Fira Code',monospace;font-size:10px;color:#374151}
+.card-arrow{
+  width:28px;height:28px;border-radius:7px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#475569;transition:all .2s;
+}
+.module-card:hover .card-arrow{background:rgba(37,99,235,.2);border-color:rgba(59,130,246,.3);color:#60A5FA}
+
+/* Features section */
+.features{
+  width:100%;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+  animation:fadeUp .6s ease .5s forwards;opacity:0;
+}
+.feature{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
+  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);
+  border-radius:10px;
+}
+.feature-icon{font-size:16px;margin-top:1px;flex-shrink:0}
+.feature-text .ft{font-size:12px;font-weight:600;color:#94A3B8}
+.feature-text .fd{font-size:11px;color:#374151;margin-top:1px;line-height:1.4}
+
+/* Footer line */
+.home-footer{
+  color:#1E3A5F;font-size:10px;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;animation:fadeUp .6s ease .6s forwards;opacity:0;
+}
+
+/* ─── LOADING OVERLAY ─── */
+#load-overlay{
+  position:absolute;inset:0;background:#060D1A;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  z-index:10;opacity:0;pointer-events:none;transition:opacity .2s;
+}
+#load-overlay.show{opacity:1;pointer-events:all}
+.load-spinner{
+  width:36px;height:36px;border:3px solid rgba(59,130,246,.2);
+  border-top-color:#3B82F6;border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:12px;color:#475569;font-weight:500;font-family:'Fira Code',monospace}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:700px){
+  .cards-grid{grid-template-columns:1fr}
+  .features{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">V</div>
+    <div class="sb-logo-text">
+      <div class="sb-logo-title">Viseo University</div>
+      <div class="sb-logo-sub">ABAP Formation</div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Accueil</div>
+    <div class="sb-nav">
+      <div class="nav-item active" data-page="home" onclick="navigate('home',this)">
+        <div class="nav-icon">🏠</div>
+        <div class="nav-label">Portail<span>Vue d'ensemble</span></div>
+        <div class="nav-progress"></div>
+        <div class="nav-tooltip">Portail</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Modules</div>
+    <div class="sb-nav">
+
+      <div class="nav-item" data-page="syntax" onclick="navigate('syntax',this)">
+        <div class="nav-icon">⚡</div>
+        <div class="nav-label">Syntaxe 7.40<span>Nouvelles instructions</span></div>
+        <div class="nav-progress"></div>
+        <div class="nav-tooltip">Syntaxe ABAP 7.40</div>
+      </div>
+
+      <div class="nav-item" data-page="statements" onclick="navigate('statements',this)">
+        <div class="nav-icon">🗄️</div>
+        <div class="nav-label">Sélections & Boucles<span>SELECT, LOOP, READ…</span></div>
+        <div class="nav-progress"></div>
+        <div class="nav-tooltip">Sélections & Boucles</div>
+      </div>
+
+      <div class="nav-item" data-page="simulator" onclick="navigate('simulator',this)">
+        <div class="nav-icon">🔬</div>
+        <div class="nav-label">Live Simulator<span>Éditeur interactif</span></div>
+        <div class="nav-progress"></div>
+        <div class="nav-tooltip">Live Simulator</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="sb-toggle">
+    <div class="toggle-btn" onclick="toggleSidebar()" title="Réduire">‹</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="content">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="tb-breadcrumb">
+      <span class="tb-bc-root">Viseo University</span>
+      <span class="tb-bc-sep">›</span>
+      <span class="tb-bc-page" id="bc-page">Portail</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-badge live" id="status-badge">● Live</div>
+      <div class="tb-badge" id="module-badge">ABAP 7.40+</div>
+    </div>
+  </div>
+
+  <!-- Frame + loading -->
+  <div id="frame-wrap">
+
+    <!-- Home screen -->
+    <div id="home-screen">
+      <div class="home-bg">
+        <div class="h-blob h-blob1"></div>
+        <div class="h-blob h-blob2"></div>
+        <div class="h-blob h-blob3"></div>
+      </div>
+
+      <div class="home-content">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="hero-eyebrow">
+            <div class="hero-eyebrow-dot"></div>
+            Viseo University · Formation ABAP
+          </div>
+          <h1 class="hero-title">Maîtrisez<br><em>ABAP 7.40+</em></h1>
+          <p class="hero-sub">Trois modules interactifs pour apprendre les nouvelles syntaxes, les instructions de base de données SAP, et expérimenter en temps réel avec le <b>simulateur live</b>.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat"><div class="stat-n">3</div><div class="stat-l">Modules</div></div>
+          <div class="stat"><div class="stat-n">25+</div><div class="stat-l">Slides</div></div>
+          <div class="stat"><div class="stat-n">12+</div><div class="stat-l">Démos live</div></div>
+          <div class="stat"><div class="stat-n">7</div><div class="stat-l">Tables SAP</div></div>
+        </div>
+
+        <!-- Module cards -->
+        <div class="cards-grid">
+
+          <div class="module-card" onclick="navigate('syntax',document.querySelector('[data-page=syntax]'))">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="card-icon icon-blue">⚡</div>
+              <div class="card-tag tag-blue">Module 1</div>
+            </div>
+            <div>
+              <div class="card-title">Syntaxe ABAP 7.40</div>
+              <div class="card-desc">Déclarations inline, opérateurs VALUE, FOR, COND, SWITCH. Les nouvelles constructions qui modernisent votre code.</div>
+            </div>
+            <div class="card-meta">
+              <span class="card-slides">8 slides · 6 démos</span>
+              <div class="card-arrow">→</div>
+            </div>
+          </div>
+
+          <div class="module-card" onclick="navigate('statements',document.querySelector('[data-page=statements]'))">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="card-icon icon-teal">🗄️</div>
+              <div class="card-tag tag-teal">Module 2</div>
+            </div>
+            <div>
+              <div class="card-title">Sélections & Boucles</div>
+              <div class="card-desc">SELECT, JOIN, FOR ALL ENTRIES, LOOP AT, READ TABLE, INSERT, UPDATE, DELETE — avec base de données simulée.</div>
+            </div>
+            <div class="card-meta">
+              <span class="card-slides">10 slides · 8 démos</span>
+              <div class="card-arrow">→</div>
+            </div>
+          </div>
+
+          <div class="module-card featured" onclick="navigate('simulator',document.querySelector('[data-page=simulator]'))">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="card-icon icon-violet">🔬</div>
+              <div class="card-tag tag-live">● Live</div>
+            </div>
+            <div>
+              <div class="card-title">Live Simulator</div>
+              <div class="card-desc">Éditeur ABAP en temps réel. Saisissez du code, visualisez immédiatement l'exécution étape par étape avec données simulées.</div>
+            </div>
+            <div class="card-meta">
+              <span class="card-slides">7 tables · 6 snippets</span>
+              <div class="card-arrow">→</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Features -->
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">🎨</div>
+            <div class="feature-text">
+              <div class="ft">Syntax Highlighting</div>
+              <div class="fd">Coloration syntaxique ABAP complète dans l'éditeur — mots-clés, tables, field-symbols, variables.</div>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-text">
+              <div class="ft">Analyse automatique</div>
+              <div class="fd">Le simulateur analyse votre code 1.2s après la frappe. Pas besoin de valider manuellement.</div>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🗄️</div>
+            <div class="feature-text">
+              <div class="ft">7 tables SAP simulées</div>
+              <div class="fd">MARA, EKKO, EKPO, KNA1, VBAK, VBAP, BKPF — données générées aléatoirement et cohérentes.</div>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🔁</div>
+            <div class="feature-text">
+              <div class="ft">Animation LOOP</div>
+              <div class="fd">Visualisez chaque itération d'un LOOP AT avec progress bar, sy-tabix et work area en temps réel.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-footer">Viseo University · ABAP S/4HANA Formation · 2024</div>
+      </div>
+    </div>
+
+    <!-- App iframe (hidden until a module is selected) -->
+    <iframe id="app-frame" src="about:blank" title="Module"></iframe>
+
+    <!-- Loading overlay -->
+    <div id="load-overlay">
+      <div class="load-spinner"></div>
+      <div class="load-text" id="load-text">Chargement...</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PAGES = {
+  home:       { label:'Portail',               badge:'Vue d\'ensemble', file:null },
+  syntax:     { label:'Syntaxe ABAP 7.40',     badge:'Module 1 · 8 slides', file:'abap_740_interactive.html' },
+  statements: { label:'Sélections & Boucles',  badge:'Module 2 · 10 slides', file:'abap_selections_loops.html' },
+  simulator:  { label:'Live Simulator',         badge:'● Live', file:'abap_live_simulator.html' },
+};
+
+let current = 'home';
+let sidebarCollapsed = false;
+
+function navigate(page, el) {
+  if(current === page) return;
+  current = page;
+
+  // Update nav active state
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if(el) el.classList.add('active');
+
+  // Update topbar
+  const meta = PAGES[page];
+  document.getElementById('bc-page').textContent = meta.label;
+  document.getElementById('module-badge').textContent = meta.badge;
+
+  const statusBadge = document.getElementById('status-badge');
+  statusBadge.textContent = page === 'simulator' ? '● Live' : '● Formation';
+
+  const home = document.getElementById('home-screen');
+  const frame = document.getElementById('app-frame');
+  const overlay = document.getElementById('load-overlay');
+
+  if(page === 'home') {
+    home.style.display = 'flex';
+    frame.classList.remove('loaded');
+    frame.src = 'about:blank';
+    return;
+  }
+
+  // Hide home, show loader
+  home.style.display = 'none';
+  overlay.classList.add('show');
+  document.getElementById('load-text').textContent = `Chargement de ${meta.label}…`;
+  frame.classList.remove('loaded');
+
+  frame.onload = () => {
+    overlay.classList.remove('show');
+    frame.classList.add('loaded');
+  };
+  frame.src = meta.file;
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  const sb = document.getElementById('sidebar');
+  const btn = document.querySelector('.toggle-btn');
+  if(sidebarCollapsed) {
+    sb.classList.add('collapsed');
+    document.body.classList.add('collapsed');
+    btn.textContent = '›';
+  } else {
+    sb.classList.remove('collapsed');
+    document.body.classList.remove('collapsed');
+    btn.textContent = '‹';
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if(e.altKey) {
+    if(e.key==='1') navigate('syntax', document.querySelector('[data-page=syntax]'));
+    if(e.key==='2') navigate('statements', document.querySelector('[data-page=statements]'));
+    if(e.key==='3') navigate('simulator', document.querySelector('[data-page=simulator]'));
+    if(e.key==='0') navigate('home', document.querySelector('[data-page=home]'));
+  }
+});
+</script>
+</body>
+</html>
