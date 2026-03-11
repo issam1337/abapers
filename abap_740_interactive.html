@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABAP 7.40 — Viseo University</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #EEF5FF;
+  --white:    #FFFFFF;
+  --b50:      #EFF6FF;
+  --b100:     #DBEAFE;
+  --b200:     #BFDBFE;
+  --b300:     #93C5FD;
+  --b400:     #60A5FA;
+  --b500:     #3B82F6;
+  --b600:     #2563EB;
+  --b700:     #1D4ED8;
+  --b900:     #1E3A5F;
+  --text:     #0F172A;
+  --mid:      #334155;
+  --muted:    #64748B;
+  --light:    #94A3B8;
+  --green:    #059669;
+  --greenl:   #D1FAE5;
+  --amber:    #D97706;
+  --amberl:   #FEF3C7;
+  --red:      #DC2626;
+  --redl:     #FEE2E2;
+  --kw:       #1D4ED8;
+  --str:      #059669;
+  --vr:       #7C3AED;
+  --tp:       #B45309;
+  --fn:       #0369A1;
+  --num:      #DC2626;
+  --shadow:   0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(37,99,235,0.08);
+  --shadow-lg:0 4px 24px rgba(37,99,235,0.14), 0 1px 4px rgba(15,23,42,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+
+/* ── ANIMATED BG ── */
+.bg-blobs{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.18;animation:drift 18s ease-in-out infinite;}
+.blob1{width:500px;height:500px;background:#60A5FA;top:-150px;right:-100px;animation-delay:0s;}
+.blob2{width:380px;height:380px;background:#93C5FD;bottom:-120px;left:-80px;animation-delay:-7s;}
+.blob3{width:260px;height:260px;background:#BFDBFE;top:40%;left:50%;animation-delay:-13s;}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,30px) scale(.97)}}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;height:54px;background:rgba(255,255,255,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--b200);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:200;}
+.nav-l{display:flex;align-items:center;gap:10px;}
+.nav-badge{padding:4px 12px;background:var(--b600);color:#fff;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.nav-title{font-size:14px;font-weight:600;color:var(--mid);}
+.nav-title strong{color:var(--b700);}
+.nav-r{display:flex;align-items:center;gap:6px;}
+.nav-counter{font-family:'Fira Code',monospace;font-size:12px;color:var(--muted);padding:0 14px;}
+.nav-counter b{color:var(--b600);}
+.nbtn{width:34px;height:34px;border:1.5px solid var(--b200);background:var(--white);color:var(--muted);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s;font-family:inherit;}
+.nbtn:hover{border-color:var(--b500);color:var(--b600);background:var(--b50);box-shadow:var(--shadow);}
+.nbtn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* ── PROGRESS ── */
+#pbar{position:fixed;top:54px;left:0;height:3px;background:linear-gradient(90deg,var(--b400),var(--b600));transition:width .5s cubic-bezier(.4,0,.2,1);z-index:201;box-shadow:0 0 8px var(--b400);}
+
+/* ── SLIDES ── */
+#sw{position:fixed;top:54px;left:0;right:0;bottom:0;overflow:hidden;z-index:1;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;transform:translateY(24px);transition:opacity .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1);pointer-events:none;padding:28px 36px 48px;}
+.slide.active{opacity:1;transform:translateY(0);pointer-events:all;}
+.slide.out{opacity:0;transform:translateY(-24px);}
+
+/* ── DOTS ── */
+#dots{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:200;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--b200);cursor:pointer;transition:all .3s;}
+.dot.on{width:22px;border-radius:3px;background:var(--b500);}
+
+/* ── COVER ── */
+.cover{align-items:center;justify-content:center;text-align:center;}
+.cover-inner{max-width:720px;position:relative;}
+.cover-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border:1.5px solid var(--b300);border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--b600);background:var(--white);margin-bottom:24px;box-shadow:var(--shadow);}
+.cover-eyebrow span{width:7px;height:7px;border-radius:50%;background:var(--b500);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.cover-h{font-size:clamp(48px,7vw,80px);font-weight:900;line-height:1.0;letter-spacing:-.03em;color:var(--b900);margin-bottom:14px;}
+.cover-h em{color:var(--b500);font-style:normal;position:relative;}
+.cover-h em::after{content:'';position:absolute;left:0;bottom:-4px;right:0;height:4px;background:linear-gradient(90deg,var(--b400),var(--b200));border-radius:2px;}
+.cover-sub{font-size:18px;color:var(--muted);font-weight:400;margin-bottom:40px;}
+.cover-sub strong{color:var(--b600);}
+.cover-tags{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.ctag{padding:9px 18px;border:1.5px solid var(--b200);border-radius:10px;font-size:13px;font-weight:500;color:var(--mid);background:var(--white);cursor:pointer;transition:all .25s;box-shadow:var(--shadow);}
+.ctag:hover{border-color:var(--b500);color:var(--b600);background:var(--b50);transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.ctag .cnum{font-family:'Fira Code',monospace;font-size:10px;color:var(--b400);margin-right:6px;}
+
+/* ── SOMMAIRE ── */
+.toc-wrap{width:100%;max-width:860px;margin:auto;}
+.toc-head{text-align:center;margin-bottom:24px;}
+.toc-head h2{font-size:32px;font-weight:800;color:var(--b900);letter-spacing:-.02em;}
+.toc-head p{font-size:14px;color:var(--muted);margin-top:6px;}
+.toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.toc-card{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white);border:1.5px solid var(--b100);border-radius:14px;cursor:pointer;transition:all .25s;box-shadow:var(--shadow);}
+.toc-card:hover{border-color:var(--b400);background:var(--b50);transform:translateX(4px);box-shadow:var(--shadow-lg);}
+.toc-n{width:36px;height:36px;border-radius:10px;background:var(--b600);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fira Code',monospace;font-size:12px;font-weight:600;flex-shrink:0;}
+.toc-info .label{font-size:14px;font-weight:600;color:var(--text);}
+.toc-info .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.toc-arrow{margin-left:auto;color:var(--b300);font-size:14px;transition:transform .2s;}
+.toc-card:hover .toc-arrow{transform:translateX(4px);color:var(--b500);}
+
+/* ── CONTENT SLIDE LAYOUT ── */
+.slide-hd{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-shrink:0;}
+.slide-num{padding:4px 12px;background:var(--b600);color:#fff;border-radius:6px;font-family:'Fira Code',monospace;font-size:11px;font-weight:600;}
+.slide-ttl{font-size:clamp(18px,2vw,24px);font-weight:800;color:var(--b900);letter-spacing:-.02em;}
+.slide-ttl em{color:var(--b500);font-style:normal;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1;min-height:0;}
+.left-col{display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:0;}
+.left-col::-webkit-scrollbar{width:3px;}
+.left-col::-webkit-scrollbar-thumb{background:var(--b200);border-radius:2px;}
+
+/* ── COMPARE ROW ── */
+.cmp-row{background:var(--white);border:1.5px solid var(--b100);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+.cmp-lbl{padding:7px 14px;background:var(--b50);border-bottom:1px solid var(--b100);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--b600);}
+.cmp-cols{display:grid;grid-template-columns:1fr 1fr;}
+.cmp-cols>div{padding:10px 12px;}
+.cmp-cols>div:first-child{border-right:1px solid var(--b100);}
+.col-hd{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;}
+.col-hd.old{color:var(--red);}
+.col-hd.nw{color:var(--green);}
+pre.mini{font-family:'Fira Code',monospace;font-size:10.5px;line-height:1.75;white-space:pre;overflow-x:auto;}
+.kw{color:var(--kw);font-weight:600;}
+.str{color:var(--str);}
+.vr{color:var(--vr);}
+.tp{color:var(--tp);}
+.fn{color:var(--fn);}
+.nm{color:var(--num);}
+.cmt{color:var(--light);font-style:italic;}
+.hl-new{background:rgba(5,150,105,.08);border-radius:3px;padding:0 2px;}
+.hl-old{background:rgba(220,38,38,.07);border-radius:3px;padding:0 2px;}
+
+/* ── PLAYGROUND ── */
+.playground{background:var(--white);border:1.5px solid var(--b200);border-radius:16px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;}
+.pg-head{padding:12px 18px;background:linear-gradient(135deg,var(--b600),var(--b500));color:#fff;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.pg-icon{font-size:18px;}
+.pg-title{font-size:13px;font-weight:700;letter-spacing:.03em;}
+.pg-subtitle{font-size:10px;opacity:.8;margin-top:1px;}
+.pg-body{flex:1;padding:18px;overflow-y:auto;min-height:0;}
+.pg-body::-webkit-scrollbar{width:3px;}
+.pg-body::-webkit-scrollbar-thumb{background:var(--b200);border-radius:2px;}
+
+/* ── PLAYGROUND COMPONENTS ── */
+.pg-input{width:100%;padding:9px 12px;border:1.5px solid var(--b200);border-radius:8px;font-family:'Fira Code',monospace;font-size:13px;color:var(--text);background:var(--b50);transition:border-color .2s;outline:none;}
+.pg-input:focus{border-color:var(--b500);background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+.pg-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
+.pg-btn{padding:9px 18px;background:var(--b600);color:#fff;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.pg-btn:hover{background:var(--b700);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3);}
+.pg-btn:active{transform:translateY(0);}
+.pg-btn.sec{background:var(--b50);color:var(--b600);border:1.5px solid var(--b200);}
+.pg-btn.sec:hover{background:var(--b100);}
+.pg-output{padding:12px 14px;background:var(--b50);border:1px solid var(--b100);border-radius:8px;font-family:'Fira Code',monospace;font-size:12px;line-height:1.7;margin-top:12px;min-height:44px;transition:all .3s;}
+.pg-output.flash{animation:flashin .4s;}
+@keyframes flashin{0%{background:var(--b100)}100%{background:var(--b50)}}
+
+/* ── TABLE VIZ ── */
+.itab{width:100%;border-collapse:collapse;font-family:'Fira Code',monospace;font-size:11px;margin:8px 0;}
+.itab th{padding:6px 10px;background:var(--b600);color:#fff;text-align:left;font-weight:600;font-size:10px;}
+.itab td{padding:6px 10px;border-bottom:1px solid var(--b100);color:var(--mid);}
+.itab tr{transition:all .3s;cursor:default;}
+.itab tr.hit{background:rgba(59,130,246,.12)!important;color:var(--b700)!important;}
+.itab tr.hit td{color:var(--b700);font-weight:600;}
+.itab tr:hover td{background:var(--b50);}
+.itab tr.fade{opacity:.3;}
+.tab-ops{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.tab-op{padding:6px 12px;background:var(--white);border:1.5px solid var(--b200);border-radius:7px;font-family:'Fira Code',monospace;font-size:10px;color:var(--mid);cursor:pointer;transition:all .2s;}
+.tab-op:hover{border-color:var(--b500);color:var(--b600);background:var(--b50);}
+.tab-op.active{background:var(--b600);color:#fff;border-color:var(--b600);}
+.result-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-family:'Fira Code',monospace;font-size:11px;font-weight:600;margin-top:8px;transition:all .3s;}
+.rb-green{background:var(--greenl);color:var(--green);}
+.rb-red{background:var(--redl);color:var(--red);}
+.rb-blue{background:var(--b100);color:var(--b700);}
+
+/* ── VALUE BUILDER ── */
+.field-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.field-row label{font-size:11px;font-weight:600;color:var(--muted);min-width:60px;}
+.field-row input{flex:1;padding:7px 10px;border:1.5px solid var(--b200);border-radius:7px;font-family:'Fira Code',monospace;font-size:12px;color:var(--text);background:var(--b50);outline:none;transition:border-color .2s;}
+.field-row input:focus{border-color:var(--b500);background:#fff;}
+
+/* ── SHIPS PIPELINE ── */
+.ship-table{margin:0 0 10px;}
+.ship-row{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;font-family:'Fira Code',monospace;font-size:10px;margin-bottom:3px;background:var(--b50);border:1px solid var(--b100);transition:all .4s;}
+.ship-row.match{background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.3);}
+.ship-row.no-match{opacity:.25;filter:grayscale(1);}
+.ship-row.moved{background:rgba(37,99,235,.1);border-color:var(--b300);}
+.s-route{padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;}
+.r0001{background:var(--b600);color:#fff;}
+.r0002{background:var(--b200);color:var(--b700);}
+.city-out{display:flex;flex-direction:column;gap:4px;min-height:32px;padding:8px;background:var(--b50);border:1px dashed var(--b300);border-radius:8px;margin-top:8px;}
+.city-tag{display:inline-flex;padding:3px 10px;background:var(--b600);color:#fff;border-radius:5px;font-family:'Fira Code',monospace;font-size:10px;font-weight:600;animation:popIn .3s;}
+@keyframes popIn{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
+
+/* ── COND/SWITCH DEMO ── */
+.when-block{padding:8px 12px;border-radius:8px;border:1.5px solid var(--b100);margin-bottom:6px;font-family:'Fira Code',monospace;font-size:11px;line-height:1.6;transition:all .3s;background:var(--white);}
+.when-block.lit{background:rgba(59,130,246,.1);border-color:var(--b400);box-shadow:0 0 0 3px rgba(59,130,246,.15);}
+.when-block.lit .wval{color:var(--b600);font-weight:700;}
+.when-block .wval{color:var(--num);}
+.when-block .wthen{color:var(--green);font-weight:600;}
+.mult-result{padding:10px 14px;border-radius:8px;background:var(--b600);color:#fff;font-family:'Fira Code',monospace;font-size:14px;font-weight:700;text-align:center;margin-top:10px;transition:all .3s;}
+.range-wrap{margin:12px 0;}
+.range-wrap input[type=range]{width:100%;accent-color:var(--b600);}
+.range-labels{display:flex;justify-content:space-between;font-family:'Fira Code',monospace;font-size:9px;color:var(--muted);}
+
+/* ── CORRESPONDING DEMO ── */
+.struct-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start;}
+.struct-card{background:var(--b50);border:1.5px solid var(--b200);border-radius:10px;overflow:hidden;}
+.struct-head{padding:6px 12px;background:var(--b600);color:#fff;font-family:'Fira Code',monospace;font-size:10px;font-weight:600;}
+.struct-field{display:flex;justify-content:space-between;padding:5px 12px;font-family:'Fira Code',monospace;font-size:10px;border-bottom:1px solid var(--b100);transition:all .3s;}
+.struct-field:last-child{border:none;}
+.struct-field.matched{background:rgba(5,150,105,.1);color:var(--green);font-weight:600;}
+.struct-field.no-match{background:rgba(220,38,38,.05);color:var(--light);}
+.arrow-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding-top:32px;}
+.arrow-line{width:2px;height:18px;background:var(--b300);border-radius:1px;transition:background .3s;}
+.arrow-line.active{background:var(--green);}
+.concat-demo{margin-top:12px;}
+.str-parts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.sp{padding:6px 12px;border-radius:7px;font-family:'Fira Code',monospace;font-size:12px;font-weight:600;}
+.sp.s1{background:var(--b100);color:var(--b700);}
+.sp.s2{background:var(--amberl);color:var(--amber);}
+.sp.plus{color:var(--muted);font-size:14px;}
+
+/* ── INSIGHT BOX ── */
+.insight{padding:12px 14px;background:linear-gradient(135deg,var(--b50),var(--white));border:1.5px solid var(--b200);border-left:4px solid var(--b500);border-radius:0 10px 10px 0;font-size:12px;color:var(--mid);line-height:1.6;margin-top:8px;}
+.insight strong{color:var(--b700);}
+
+/* ── MISC UTILS ── */
+.gap8{display:flex;flex-direction:column;gap:8px;}
+.mt8{margin-top:8px;}
+.mt12{margin-top:12px;}
+.flex-row{display:flex;gap:8px;align-items:center;}
+.key-hint{position:fixed;bottom:18px;right:24px;font-size:10px;color:var(--light);font-family:'Fira Code',monospace;display:flex;gap:4px;align-items:center;}
+.key{padding:2px 7px;background:var(--white);border:1px solid var(--b200);border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+</style>
+</head>
+<body>
+<div class="bg-blobs"><div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div></div>
+
+<div id="pbar"></div>
+<nav>
+  <div class="nav-l">
+    <span class="nav-badge">S33</span>
+    <span class="nav-title"><strong>Viseo University</strong> · ABAP 7.40 Syntaxe</span>
+  </div>
+  <div class="nav-r">
+    <button class="nbtn" id="bp">&#8592;</button>
+    <div class="nav-counter"><b id="nc">1</b> / <span id="nt">8</span></div>
+    <button class="nbtn" id="bn">&#8594;</button>
+  </div>
+</nav>
+<div id="dots"></div>
+<div class="key-hint"><span class="key">←</span><span class="key">→</span> naviguer</div>
+
+<div id="sw">
+
+<!-- ══════════════════════════════════════════
+     SLIDE 1 · COVER
+══════════════════════════════════════════ -->
+<div class="slide active cover" id="s0">
+  <div class="cover-inner">
+    <div class="cover-eyebrow"><span></span>Formation ABAP · Session S33 · 2024</div>
+    <h1 class="cover-h"><em>ABAP</em> 7.40<br>Nouvelle Syntaxe</h1>
+    <p class="cover-sub">Viseo University · <strong>Formation V.3</strong> — Explorez chaque concept avec des exemples interactifs</p>
+    <div class="cover-tags">
+      <div class="ctag" onclick="goTo(2)"><span class="cnum">01</span>Déclarations inline</div>
+      <div class="ctag" onclick="goTo(3)"><span class="cnum">02</span>Expressions tableau</div>
+      <div class="ctag" onclick="goTo(4)"><span class="cnum">03</span>VALUE</div>
+      <div class="ctag" onclick="goTo(5)"><span class="cnum">04</span>FOR</div>
+      <div class="ctag" onclick="goTo(6)"><span class="cnum">05</span>COND &amp; SWITCH</div>
+      <div class="ctag" onclick="goTo(7)"><span class="cnum">06</span>CORRESPONDING</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 2 · SOMMAIRE
+══════════════════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="toc-wrap">
+    <div class="toc-head">
+      <h2>Sommaire — ABAP 7.40</h2>
+      <p>Cliquez sur un chapitre pour y accéder directement</p>
+    </div>
+    <div class="toc-grid">
+      <div class="toc-card" onclick="goTo(2)">
+        <div class="toc-n">01</div>
+        <div class="toc-info"><div class="label">Déclarations en ligne</div><div class="sub">DATA(), LOOP, READ, SELECT inline</div></div>
+        <div class="toc-arrow">→</div>
+      </div>
+      <div class="toc-card" onclick="goTo(3)">
+        <div class="toc-n">02</div>
+        <div class="toc-info"><div class="label">Expressions de tableau</div><div class="sub">itab[idx], line_exists(), lines()</div></div>
+        <div class="toc-arrow">→</div>
+      </div>
+      <div class="toc-card" onclick="goTo(4)">
+        <div class="toc-n">03</div>
+        <div class="toc-info"><div class="label">Opérateur VALUE</div><div class="sub">Structures et tables internes</div></div>
+        <div class="toc-arrow">→</div>
+      </div>
+      <div class="toc-card" onclick="goTo(5)">
+        <div class="toc-n">04</div>
+        <div class="toc-info"><div class="label">Opérateur FOR</div><div class="sub">Boucle condensée avec filtre</div></div>
+        <div class="toc-arrow">→</div>
+      </div>
+      <div class="toc-card" onclick="goTo(6)">
+        <div class="toc-n">05</div>
+        <div class="toc-info"><div class="label">COND &amp; SWITCH</div><div class="sub">Expressions conditionnelles inline</div></div>
+        <div class="toc-arrow">→</div>
+      </div>
+      <div class="toc-card" onclick="goTo(7)">
+        <div class="toc-n">06</div>
+        <div class="toc-info"><div class="label">CORRESPONDING &amp; Concaténation</div><div class="sub">Copie et templates de chaînes</div></div>
+        <div class="toc-arrow">→</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 3 · DÉCLARATIONS INLINE
+══════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-hd">
+    <span class="slide-num">01</span>
+    <h2 class="slide-ttl">Déclarations <em>en ligne</em></h2>
+  </div>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔷 DATA — Variable simple</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="kw">DATA</span>: <span class="vr">text</span> <span class="kw">TYPE</span> <span class="tp">string</span>.
+<span class="vr">text</span> = <span class="str">'ABC'</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="kw">DATA</span>(<span class="vr">text</span>) = <span class="str">'ABC'</span>.</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔷 LOOP AT — Work area inline</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="kw">DATA</span> <span class="vr">wa</span> <span class="kw">LIKE LINE OF</span> <span class="vr">itab</span>.
+<span class="kw">LOOP AT</span> <span class="vr">itab</span> <span class="kw">INTO</span> <span class="vr">wa</span>.
+  ...
+<span class="kw">ENDLOOP</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="kw">LOOP AT</span> <span class="vr">itab</span>
+  <span class="kw">INTO DATA</span>(<span class="vr">wa</span>).</span>
+  ...
+<span class="kw">ENDLOOP</span>.</pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔷 SELECT INTO TABLE — Inline + @</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="kw">DATA</span> <span class="vr">itab</span> <span class="kw">TYPE TABLE OF</span> <span class="tp">ekko</span>.
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tp">ekko</span>
+  <span class="kw">INTO TABLE</span> <span class="vr">itab</span>
+  <span class="kw">WHERE</span> <span class="vr">ebeln</span> = <span class="vr">lv_ebeln</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tp">ekko</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">itab</span>)
+  <span class="kw">WHERE</span> <span class="vr">ebeln</span> = @<span class="vr">lv_ebeln</span>.</span></pre></div>
+        </div>
+      </div>
+    </div>
+    <!-- PLAYGROUND -->
+    <div class="playground">
+      <div class="pg-head">
+        <span class="pg-icon">⚡</span>
+        <div><div class="pg-title">Générateur de déclaration inline</div><div class="pg-subtitle">Tapez un nom de variable → voyez la transformation</div></div>
+      </div>
+      <div class="pg-body gap8">
+        <div>
+          <div class="pg-label">Nom de variable</div>
+          <input class="pg-input" id="d1-varname" placeholder="ex: lv_matnr" oninput="genDecl()" value="lv_matnr">
+        </div>
+        <div>
+          <div class="pg-label">Type ABAP</div>
+          <select class="pg-input" id="d1-type" onchange="genDecl()">
+            <option value="string">string</option>
+            <option value="i">i (integer)</option>
+            <option value="d">d (date)</option>
+            <option value="p DECIMALS 2">p DECIMALS 2</option>
+            <option value="matnr">matnr</option>
+            <option value="belnr_d">belnr_d</option>
+          </select>
+        </div>
+        <div>
+          <div class="pg-label">Valeur initiale</div>
+          <input class="pg-input" id="d1-val" placeholder="ex: 'MATERIAL-001'" oninput="genDecl()" value="'MATERIAL-001'">
+        </div>
+        <div style="background:var(--redl);padding:10px 14px;border-radius:8px;border:1px solid #FCA5A5;">
+          <div style="font-size:9px;font-weight:700;color:var(--red);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Avant 7.40</div>
+          <pre id="d1-before" class="mini" style="color:var(--mid);"></pre>
+        </div>
+        <div style="background:var(--greenl);padding:10px 14px;border-radius:8px;border:1px solid #6EE7B7;">
+          <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Avec 7.40 ✨</div>
+          <pre id="d1-after" class="mini" style="color:var(--green);font-weight:600;"></pre>
+        </div>
+        <div class="insight">💡 <strong>Une ligne au lieu de deux.</strong> Le type est <em>inféré automatiquement</em> par le compilateur ABAP à partir de la valeur assignée.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 4 · TABLE EXPRESSIONS
+══════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-hd">
+    <span class="slide-num">02</span>
+    <h2 class="slide-ttl">Expressions de <em>tableau</em></h2>
+  </div>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="cmp-row">
+        <div class="cmp-lbl">📋 Read Table par index</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">READ TABLE</span> <span class="vr">itab</span>
+  <span class="kw">INTO</span> <span class="vr">wa</span> <span class="kw">INDEX</span> <span class="nm">2</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="vr">wa</span> = <span class="vr">itab</span>[ <span class="nm">2</span> ].</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">📋 Read Table par clé</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">READ TABLE</span> <span class="vr">itab</span>
+  <span class="kw">INTO</span> <span class="vr">wa</span>
+  <span class="kw">WITH KEY</span>
+    <span class="vr">matnr</span> = <span class="str">'M001'</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="vr">wa</span> = <span class="vr">itab</span>[
+  <span class="vr">matnr</span> = <span class="str">'M001'</span> ].</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">📋 Vérifier l'existence</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">READ TABLE</span> <span class="vr">itab</span>
+  <span class="kw">TRANSPORTING NO FIELDS</span>
+  <span class="kw">WITH KEY</span> <span class="vr">matnr</span>=<span class="str">'M001'</span>.
+<span class="kw">IF</span> <span class="vr">sy-subrc</span> = <span class="nm">0</span>. ... <span class="kw">ENDIF</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="kw">IF</span> <span class="fn">line_exists</span>(
+  <span class="vr">itab</span>[ <span class="vr">matnr</span>=<span class="str">'M001'</span>] ).
+  ...
+<span class="kw">ENDIF</span>.</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">📋 lines() / line_index()</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">DESCRIBE TABLE</span> <span class="vr">itab</span>
+  <span class="kw">LINES</span> <span class="vr">lv_n</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="kw">DATA</span>(<span class="vr">lv_n</span>)
+  = <span class="fn">lines</span>( <span class="vr">itab</span> ).</span></pre></div>
+        </div>
+      </div>
+    </div>
+    <!-- PLAYGROUND -->
+    <div class="playground">
+      <div class="pg-head">
+        <span class="pg-icon">🔬</span>
+        <div><div class="pg-title">Table Interactive — gt_materials</div><div class="pg-subtitle">Cliquez une opération pour voir quelle ligne est ciblée</div></div>
+      </div>
+      <div class="pg-body">
+        <table class="itab" id="mat-table">
+          <thead><tr><th>#</th><th>MATNR</th><th>MAKTX</th><th>MTART</th></tr></thead>
+          <tbody>
+            <tr data-idx="1" data-matnr="M001" data-mtart="FERT"><td>1</td><td>M001</td><td>Produit fini A</td><td>FERT</td></tr>
+            <tr data-idx="2" data-matnr="M002" data-mtart="ROH"><td>2</td><td>M002</td><td>Matière première</td><td>ROH</td></tr>
+            <tr data-idx="3" data-matnr="M003" data-mtart="FERT"><td>3</td><td>M003</td><td>Produit fini B</td><td>FERT</td></tr>
+            <tr data-idx="4" data-matnr="M004" data-mtart="HALB"><td>4</td><td>M004</td><td>Semi-fini</td><td>HALB</td></tr>
+          </tbody>
+        </table>
+        <div class="tab-ops">
+          <div class="tab-op" onclick="tabOp('idx','2')">itab[ <b>2</b> ]</div>
+          <div class="tab-op" onclick="tabOp('key','M003')">itab[ matnr='M003' ]</div>
+          <div class="tab-op" onclick="tabOp('exists','M001')">line_exists( matnr='M001' )</div>
+          <div class="tab-op" onclick="tabOp('no-exists','M999')">line_exists( matnr='M999' )</div>
+          <div class="tab-op" onclick="tabOp('lines','')">lines( itab )</div>
+        </div>
+        <div id="tab-result" class="mt8"></div>
+        <div class="pg-output" id="tab-code" style="margin-top:10px;font-size:11px;">← Cliquez une opération ci-dessus</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 5 · VALUE
+══════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-hd">
+    <span class="slide-num">03</span>
+    <h2 class="slide-ttl">Opérateur <em>VALUE</em></h2>
+  </div>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="cmp-row">
+        <div class="cmp-lbl">💎 VALUE — Initialiser une structure</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="kw">DATA</span>: <span class="vr">ls_s</span> <span class="kw">TYPE</span> <span class="tp">ty_s</span>.
+<span class="vr">ls_s</span>-<span class="vr">col1</span> = <span class="nm">1</span>.
+<span class="vr">ls_s</span>-<span class="vr">col2</span> = <span class="nm">2</span>.
+<span class="vr">ls_s</span>-<span class="vr">col3</span> = <span class="str">'ABC'</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="vr">ls_s</span> = <span class="kw">VALUE</span> #(
+  <span class="vr">col1</span> = <span class="nm">1</span>
+  <span class="vr">col2</span> = <span class="nm">2</span>
+  <span class="vr">col3</span> = <span class="str">'ABC'</span> ).</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">💎 VALUE — Remplir une table interne</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="vr">ls_s</span>-<span class="vr">col1</span> = <span class="nm">1</span>. <span class="vr">ls_s</span>-<span class="vr">col2</span> = <span class="nm">1</span>.
+<span class="kw">APPEND</span> <span class="vr">ls_s</span> <span class="kw">TO</span> <span class="vr">lt_s</span>.
+<span class="vr">ls_s</span>-<span class="vr">col1</span> = <span class="nm">2</span>. <span class="vr">ls_s</span>-<span class="vr">col2</span> = <span class="nm">2</span>.
+<span class="kw">APPEND</span> <span class="vr">ls_s</span> <span class="kw">TO</span> <span class="vr">lt_s</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="vr">lt_s</span> = <span class="kw">VALUE</span> #(
+  ( <span class="vr">col1</span>=<span class="nm">1</span> <span class="vr">col2</span>=<span class="nm">1</span> )
+  ( <span class="vr">col1</span>=<span class="nm">2</span> <span class="vr">col2</span>=<span class="nm">2</span> ) ).</span></pre></div>
+        </div>
+      </div>
+    </div>
+    <!-- PLAYGROUND -->
+    <div class="playground">
+      <div class="pg-head">
+        <span class="pg-icon">🏗️</span>
+        <div><div class="pg-title">Constructeur VALUE Live</div><div class="pg-subtitle">Remplissez les champs → l'expression VALUE se génère</div></div>
+      </div>
+      <div class="pg-body">
+        <div style="background:var(--b50);border:1.5px solid var(--b200);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--b600);margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase;">Structure : ty_order_item</div>
+          <div class="field-row"><label>matnr</label><input id="v-matnr" placeholder="M001" oninput="buildVal()" value="M001"></div>
+          <div class="field-row"><label>menge</label><input id="v-menge" placeholder="100" oninput="buildVal()" value="100" type="number"></div>
+          <div class="field-row"><label>werks</label><input id="v-werks" placeholder="1000" oninput="buildVal()" value="1000"></div>
+          <div class="field-row"><label>lifnr</label><input id="v-lifnr" placeholder="VENDOR01" oninput="buildVal()" value="VENDOR01"></div>
+        </div>
+        <div style="background:var(--redl);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid #FCA5A5;">
+          <div style="font-size:9px;font-weight:700;color:var(--red);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase;">Avant 7.40 — 8 lignes</div>
+          <pre id="val-before" class="mini" style="color:var(--mid);font-size:10px;"></pre>
+        </div>
+        <div style="background:var(--greenl);border-radius:8px;padding:10px 12px;border:1px solid #6EE7B7;">
+          <div style="font-size:9px;font-weight:700;color:var(--green);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase;">Avec 7.40 ✨ — 1 expression</div>
+          <pre id="val-after" class="mini" style="color:var(--green);font-weight:500;font-size:10px;"></pre>
+        </div>
+        <div id="val-savings" class="mt8" style="text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 6 · FOR
+══════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-hd">
+    <span class="slide-num">04</span>
+    <h2 class="slide-ttl">Opérateur <em>FOR</em></h2>
+  </div>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔁 FOR — Forme condensée en une ligne</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="kw">LOOP AT</span> <span class="vr">gt_ships</span>
+  <span class="kw">INTO</span> <span class="vr">gs_ship</span>
+  <span class="kw">WHERE</span> <span class="vr">route</span>=<span class="str">'R0001'</span>.
+  <span class="vr">gs_city</span>=<span class="vr">gs_ship</span>-<span class="vr">city</span>.
+  <span class="kw">APPEND</span> <span class="vr">gs_city</span>
+    <span class="kw">TO</span> <span class="vr">gt_citys</span>.
+<span class="kw">ENDLOOP</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="kw">DATA</span>(<span class="vr">gt_citys</span>) =
+ <span class="kw">VALUE</span> <span class="tp">ty_citys</span>(
+  <span class="kw">FOR</span> <span class="vr">ls_s</span> <span class="kw">IN</span>
+    <span class="vr">gt_ships</span>
+  <span class="kw">WHERE</span>( <span class="vr">route</span>=
+    <span class="str">'R0001'</span> )
+  ( <span class="vr">ls_s</span>-<span class="vr">city</span> ) ).</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔁 FOR avec BASE — Append incrémental</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant 7.40</div><pre class="mini"><span class="kw">LOOP AT</span> <span class="vr">gt_ships</span>
+  <span class="kw">INTO</span> <span class="vr">gs_ship</span>
+  <span class="kw">WHERE</span> <span class="vr">route</span>=<span class="str">'R0001'</span>.
+  <span class="kw">APPEND VALUE</span> <span class="tp">ty_citys</span>(
+    <span class="vr">city</span>=<span class="vr">gs_ship</span>-<span class="vr">city</span>)
+  <span class="kw">TO</span> <span class="vr">gt_citys</span>.
+<span class="kw">ENDLOOP</span>.</pre></div>
+          <div><div class="col-hd nw">Avec 7.40</div><pre class="mini"><span class="hl-new"><span class="kw">LOOP AT</span> <span class="vr">gt_ships</span>
+  <span class="kw">INTO</span> <span class="vr">gs_ship</span>
+  <span class="kw">WHERE</span> <span class="vr">route</span>=<span class="str">'R0001'</span>.
+<span class="vr">gt_citys</span>=<span class="kw">VALUE</span> <span class="tp">ty_citys</span>(
+ <span class="kw">BASE</span> <span class="vr">gt_citys</span>
+ (<span class="vr">city</span>=<span class="vr">gs_ship</span>-<span class="vr">city</span>)).
+<span class="kw">ENDLOOP</span>.</span></pre></div>
+        </div>
+      </div>
+    </div>
+    <!-- PLAYGROUND -->
+    <div class="playground">
+      <div class="pg-head">
+        <span class="pg-icon">🚢</span>
+        <div><div class="pg-title">Simulateur FOR Loop</div><div class="pg-subtitle">Filtrer gt_ships WHERE route = R0001 → extraire les villes</div></div>
+      </div>
+      <div class="pg-body">
+        <div style="font-size:10px;font-weight:700;color:var(--b600);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em;">gt_ships (table source)</div>
+        <div class="ship-table" id="ships-table">
+          <div class="ship-row" data-route="R0001" data-city="Hamburg"><span class="s-route r0001">R0001</span> <span>SHIP_01</span> <span style="color:var(--vr)">Hamburg</span></div>
+          <div class="ship-row" data-route="R0002" data-city="Marseille"><span class="s-route r0002">R0002</span> <span>SHIP_02</span> <span style="color:var(--vr)">Marseille</span></div>
+          <div class="ship-row" data-route="R0001" data-city="Rotterdam"><span class="s-route r0001">R0001</span> <span>SHIP_03</span> <span style="color:var(--vr)">Rotterdam</span></div>
+          <div class="ship-row" data-route="R0001" data-city="Antwerp"><span class="s-route r0001">R0001</span> <span>SHIP_04</span> <span style="color:var(--vr)">Antwerp</span></div>
+          <div class="ship-row" data-route="R0002" data-city="Genova"><span class="s-route r0002">R0002</span> <span>SHIP_05</span> <span style="color:var(--vr)">Genova</span></div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em;">gt_citys (résultat)</div>
+        <div class="city-out" id="city-out"><span style="font-size:10px;color:var(--light);font-family:'Fira Code',monospace;">← vide, cliquez Run</span></div>
+        <div class="flex-row mt8">
+          <button class="pg-btn" onclick="runFor()">▶ Run FOR Loop</button>
+          <button class="pg-btn sec" onclick="resetFor()">↺ Reset</button>
+        </div>
+        <div class="insight mt8">💡 L'opérateur <strong>FOR</strong> remplace le LOOP + APPEND par une <em>expression de construction de table</em> en une seule ligne déclarative.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 7 · COND & SWITCH
+══════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-hd">
+    <span class="slide-num">05</span>
+    <h2 class="slide-ttl"><em>COND</em> &amp; SWITCH</h2>
+  </div>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔀 COND — Expression conditionnelle</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant (CASE)</div><pre class="mini"><span class="kw">CASE</span> <span class="vr">lv_mult</span>.
+ <span class="kw">WHEN</span> <span class="nm">0</span>.
+   <span class="vr">lv_m</span> = <span class="nm">100</span>.
+ <span class="kw">WHEN</span> <span class="nm">1</span>.
+   <span class="vr">lv_m</span> = <span class="nm">10</span>.
+ <span class="kw">WHEN</span> <span class="nm">3</span>.
+   <span class="vr">lv_m</span> = <span class="str">'0.1'</span>.
+ <span class="kw">WHEN OTHERS</span>.
+   <span class="vr">lv_m</span> = <span class="nm">1</span>.
+<span class="kw">ENDCASE</span>.</pre></div>
+          <div><div class="col-hd nw">7.40 COND</div><pre class="mini"><span class="hl-new"><span class="vr">lv_m</span> = <span class="kw">COND</span> #(
+ <span class="kw">WHEN</span> <span class="vr">lv_mult</span>=<span class="nm">0</span>
+   <span class="kw">THEN</span> <span class="nm">100</span>
+ <span class="kw">WHEN</span> <span class="vr">lv_mult</span>=<span class="nm">1</span>
+   <span class="kw">THEN</span> <span class="nm">10</span>
+ <span class="kw">WHEN</span> <span class="vr">lv_mult</span>=<span class="nm">3</span>
+   <span class="kw">THEN</span> <span class="str">'0.1'</span>
+ <span class="kw">ELSE</span> <span class="nm">1</span> ).</span></pre></div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:var(--b50);border:1.5px solid var(--b200);border-radius:10px;font-size:11px;color:var(--mid);">
+        <div style="font-weight:700;color:var(--b700);margin-bottom:6px;">COND vs SWITCH — différence clé</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="padding:8px;background:var(--white);border-radius:7px;border:1px solid var(--b200);">
+            <div style="font-family:'Fira Code',monospace;font-size:10px;color:var(--kw);font-weight:700;margin-bottom:4px;">COND #( WHEN expr )</div>
+            <div style="font-size:10px;line-height:1.6;">Conditions <strong>booléennes</strong> arbitraires. Équiv. IF/ELSEIF.</div>
+          </div>
+          <div style="padding:8px;background:var(--white);border-radius:7px;border:1px solid var(--b200);">
+            <div style="font-family:'Fira Code',monospace;font-size:10px;color:var(--kw);font-weight:700;margin-bottom:4px;">SWITCH #( var WHEN )</div>
+            <div style="font-size:10px;line-height:1.6;">Variable <strong>discrète</strong>. Équiv. CASE/WHEN.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- PLAYGROUND -->
+    <div class="playground">
+      <div class="pg-head">
+        <span class="pg-icon">🎛️</span>
+        <div><div class="pg-title">Testeur COND / SWITCH Live</div><div class="pg-subtitle">Bougez le curseur → voyez quelle branche s'active</div></div>
+      </div>
+      <div class="pg-body">
+        <div class="range-wrap">
+          <div class="pg-label">lv_mult = <strong id="mult-val" style="color:var(--b600);font-family:'Fira Code',monospace;font-size:15px;">1</strong></div>
+          <input type="range" min="0" max="5" value="1" id="mult-slider" oninput="updateCond(this.value)">
+          <div class="range-labels"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--b600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">COND expression</div>
+            <div class="when-block" id="cw0"><span class="kw">WHEN</span> lv_mult=<span class="wval">0</span> <span class="wthen">THEN 100</span></div>
+            <div class="when-block" id="cw1"><span class="kw">WHEN</span> lv_mult=<span class="wval">1</span> <span class="wthen">THEN 10</span></div>
+            <div class="when-block" id="cw3"><span class="kw">WHEN</span> lv_mult=<span class="wval">3</span> <span class="wthen">THEN 0.1</span></div>
+            <div class="when-block" id="cwelse"><span class="kw">ELSE</span> <span class="wthen">1</span></div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">SWITCH expression</div>
+            <div class="when-block" id="sw0"><span class="kw">WHEN</span> <span class="wval">0</span> <span class="wthen">THEN 100</span></div>
+            <div class="when-block" id="sw1"><span class="kw">WHEN</span> <span class="wval">1</span> <span class="wthen">THEN 10</span></div>
+            <div class="when-block" id="sw3"><span class="kw">WHEN</span> <span class="wval">3</span> <span class="wthen">THEN 0.1</span></div>
+            <div class="when-block" id="swelse"><span class="kw">ELSE</span> <span class="wthen">1</span></div>
+          </div>
+        </div>
+        <div class="mult-result" id="mult-result">lv_multiplier = 10</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 8 · CORRESPONDING & CONCAT
+══════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-hd">
+    <span class="slide-num">06</span>
+    <h2 class="slide-ttl"><em>CORRESPONDING</em> &amp; Concaténation</h2>
+  </div>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔄 CORRESPONDING — Copie par champ</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">CLEAR</span> <span class="vr">ls_line2</span>.
+<span class="kw">MOVE-CORRESPONDING</span>
+  <span class="vr">ls_line1</span>
+  <span class="kw">TO</span> <span class="vr">ls_line2</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="vr">ls_line2</span> =
+ <span class="kw">CORRESPONDING</span> #(
+   <span class="vr">ls_line1</span> ).</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔗 Concaténation — String templates</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">CONCATENATE</span>
+  <span class="str">'Hello'</span> <span class="str">'world'</span>
+  <span class="kw">INTO</span> <span class="vr">lv_out</span>
+  <span class="kw">SEPARATED BY</span>
+    <span class="vr">space</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="kw">DATA</span>(<span class="vr">lv_out</span>) =
+  <span class="str">|Hello|</span> &amp;
+  <span class="str">| |</span>   &amp;
+  <span class="str">|world|</span>.</span></pre></div>
+        </div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-lbl">🔗 String template — Interpolation { }</div>
+        <div class="cmp-cols">
+          <div><div class="col-hd old">Avant</div><pre class="mini"><span class="kw">CONCATENATE</span>
+  <span class="str">'Val: '</span> <span class="vr">lv_v</span>
+  <span class="kw">INTO</span> <span class="vr">lv_out</span>.</pre></div>
+          <div><div class="col-hd nw">7.40</div><pre class="mini"><span class="hl-new"><span class="kw">DATA</span>(<span class="vr">s</span>) =
+  <span class="str">|Val: { <span class="vr">lv_v</span> }|</span>.</span></pre></div>
+        </div>
+      </div>
+    </div>
+    <!-- PLAYGROUND -->
+    <div class="playground">
+      <div class="pg-head">
+        <span class="pg-icon">🔗</span>
+        <div><div class="pg-title">CORRESPONDING + String Builder</div><div class="pg-subtitle">Animez la copie de structure & construisez vos templates</div></div>
+      </div>
+      <div class="pg-body">
+        <div style="font-size:10px;font-weight:700;color:var(--b600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">CORRESPONDING — Correspondance des champs</div>
+        <div class="struct-compare">
+          <div class="struct-card">
+            <div class="struct-head">ls_ekko (source)</div>
+            <div class="struct-field" id="f-ebeln"><span>EBELN</span><span style="color:var(--str)">'4500001'</span></div>
+            <div class="struct-field" id="f-bukrs"><span>BUKRS</span><span style="color:var(--str)">'1000'</span></div>
+            <div class="struct-field" id="f-lifnr"><span>LIFNR</span><span style="color:var(--str)">'V001'</span></div>
+            <div class="struct-field" id="f-only1" style="color:var(--light);"><span>AEDAT</span><span>'20240101'</span></div>
+          </div>
+          <div class="arrow-col">
+            <div class="arrow-line" id="al1"></div>
+            <div class="arrow-line" id="al2"></div>
+            <div class="arrow-line" id="al3"></div>
+            <div style="color:var(--b300);font-size:10px;" id="arr-icon">→</div>
+            <div class="arrow-line" style="background:transparent;"></div>
+          </div>
+          <div class="struct-card">
+            <div class="struct-head">ls_target (destination)</div>
+            <div class="struct-field" id="t-ebeln"><span>EBELN</span><span id="tv-ebeln" style="color:var(--muted)">—</span></div>
+            <div class="struct-field" id="t-bukrs"><span>BUKRS</span><span id="tv-bukrs" style="color:var(--muted)">—</span></div>
+            <div class="struct-field" id="t-lifnr"><span>LIFNR</span><span id="tv-lifnr" style="color:var(--muted)">—</span></div>
+            <div class="struct-field" id="t-extra" style="color:var(--light)"><span>MANDT</span><span id="tv-extra" style="color:var(--muted)">—</span></div>
+          </div>
+        </div>
+        <div class="flex-row mt8">
+          <button class="pg-btn" onclick="runCorr()">▶ CORRESPONDING #( ls_ekko )</button>
+          <button class="pg-btn sec" onclick="resetCorr()">↺</button>
+        </div>
+        <div style="border-top:1px solid var(--b100);margin-top:14px;padding-top:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--b600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">String Template Builder</div>
+          <div class="field-row"><label style="min-width:50px;font-size:10px;">Nom</label><input class="pg-input" style="font-size:11px;padding:6px 9px;" id="st-nom" value="Issam" oninput="buildStr()"></div>
+          <div class="field-row"><label style="min-width:50px;font-size:10px;">Société</label><input class="pg-input" style="font-size:11px;padding:6px 9px;" id="st-soc" value="Viseo" oninput="buildStr()"></div>
+          <div class="pg-output" id="str-out" style="margin-top:6px;font-size:11px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /sw -->
+
+<script>
+// ── Navigation ──
+const slides = document.querySelectorAll('.slide');
+const N = slides.length;
+let cur = 0;
+document.getElementById('nt').textContent = N;
+
+const dotsEl = document.getElementById('dots');
+slides.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=()=>goTo(i);
+  dotsEl.appendChild(d);
+});
+
+function goTo(n){
+  if(n<0||n>=N)return;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('out');
+  const old=cur; cur=n;
+  setTimeout(()=>slides[old].classList.remove('out'),550);
+  slides[cur].classList.add('active');
+  document.getElementById('nc').textContent=cur+1;
+  document.getElementById('pbar').style.width=((cur+1)/N*100)+'%';
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  document.getElementById('bp').disabled=cur===0;
+  document.getElementById('bn').disabled=cur===N-1;
+  if(cur===6) setTimeout(()=>updateCond(document.getElementById('mult-slider').value),200);
+}
+document.getElementById('bp').onclick=()=>goTo(cur-1);
+document.getElementById('bn').onclick=()=>goTo(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') goTo(cur+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') goTo(cur-1);
+});
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>50)goTo(dx<0?cur+1:cur-1);
+},{passive:true});
+document.getElementById('bp').disabled=true;
+document.getElementById('pbar').style.width=(1/N*100)+'%';
+
+// ── SLIDE 3 : Inline Declaration Generator ──
+function genDecl(){
+  const v=document.getElementById('d1-varname').value||'lv_var';
+  const t=document.getElementById('d1-type').value;
+  const val=document.getElementById('d1-val').value||"''";
+  document.getElementById('d1-before').innerHTML=
+    `<span style="color:var(--kw)">DATA</span>: <span style="color:var(--vr)">${v}</span> <span style="color:var(--kw)">TYPE</span> <span style="color:var(--tp)">${t}</span>.\n<span style="color:var(--vr)">${v}</span> = ${val}.`;
+  document.getElementById('d1-after').innerHTML=
+    `<span style="color:var(--kw)">DATA</span>(<span style="color:var(--vr)">${v}</span>) = ${val}.`;
+}
+genDecl();
+
+// ── SLIDE 4 : Table Operations ──
+function tabOp(type, val){
+  document.querySelectorAll('.tab-op').forEach(e=>e.classList.remove('active'));
+  event.target.classList.add('active');
+  const rows=document.querySelectorAll('#mat-table tbody tr');
+  rows.forEach(r=>{r.classList.remove('hit','fade');});
+  const res=document.getElementById('tab-result');
+  const code=document.getElementById('tab-code');
+  setTimeout(()=>{
+    if(type==='idx'){
+      rows.forEach((r,i)=>{
+        if(i+1===parseInt(val)) r.classList.add('hit');
+        else r.classList.add('fade');
+      });
+      const row=document.querySelector(`#mat-table tbody tr:nth-child(${val})`);
+      res.innerHTML=`<span class="result-badge rb-blue">wa = itab[ ${val} ] → MATNR: ${row.dataset.matnr}</span>`;
+      code.innerHTML=`<span style="color:var(--vr)">wa</span> = <span style="color:var(--vr)">itab</span>[ <span style="color:var(--num)">${val}</span> ].`;
+    } else if(type==='key'){
+      rows.forEach(r=>{
+        if(r.dataset.matnr===val) r.classList.add('hit');
+        else r.classList.add('fade');
+      });
+      res.innerHTML=`<span class="result-badge rb-blue">itab[ matnr='${val}' ] → Ligne trouvée ✓</span>`;
+      code.innerHTML=`<span style="color:var(--vr)">wa</span> = <span style="color:var(--vr)">itab</span>[ <span style="color:var(--vr)">matnr</span> = <span style="color:var(--str)">'${val}'</span> ].`;
+    } else if(type==='exists'){
+      const found=[...rows].some(r=>r.dataset.matnr===val);
+      if(found){ rows.forEach(r=>{ if(r.dataset.matnr===val)r.classList.add('hit'); else r.classList.add('fade'); }); }
+      res.innerHTML=`<span class="result-badge ${found?'rb-green':'rb-red'}">${found?'✓ VRAI — ligne existe':'✗ FAUX — non trouvé'}</span>`;
+      code.innerHTML=`<span style="color:var(--kw)">IF</span> <span style="color:var(--fn)">line_exists</span>( <span style="color:var(--vr)">itab</span>[ <span style="color:var(--vr)">matnr</span>=<span style="color:var(--str)">'${val}'</span>] ).<br>  <span style="color:var(--cmt)"><span style="color:var(--kw)">\" ...code exécuté</span></span><br><span style="color:var(--kw)">ENDIF</span>.`;
+    } else if(type==='no-exists'){
+      res.innerHTML=`<span class="result-badge rb-red">✗ FAUX — M999 n'existe pas</span>`;
+      code.innerHTML=`<span style="color:var(--kw)">IF</span> <span style="color:var(--fn)">line_exists</span>( <span style="color:var(--vr)">itab</span>[ <span style="color:var(--vr)">matnr</span>=<span style="color:var(--str)">'M999'</span>] ). <span style="color:var(--light)"><em>← FAUX</em></span>`;
+    } else if(type==='lines'){
+      rows.forEach(r=>r.classList.add('hit'));
+      res.innerHTML=`<span class="result-badge rb-blue">lines( itab ) = <strong>4</strong></span>`;
+      code.innerHTML=`<span style="color:var(--kw)">DATA</span>(<span style="color:var(--vr)">lv_n</span>) = <span style="color:var(--fn)">lines</span>( <span style="color:var(--vr)">itab</span> ).  <span style="color:var(--light)"><em>\" = 4</em></span>`;
+    }
+  },80);
+}
+
+// ── SLIDE 5 : VALUE Builder ──
+function buildVal(){
+  const m=document.getElementById('v-matnr').value||'';
+  const q=document.getElementById('v-menge').value||'';
+  const w=document.getElementById('v-werks').value||'';
+  const l=document.getElementById('v-lifnr').value||'';
+  document.getElementById('val-before').innerHTML=
+`ls_item-matnr = '${m}'.
+ls_item-menge = ${q}.
+ls_item-werks = '${w}'.
+ls_item-lifnr = '${l}'.`;
+  document.getElementById('val-after').innerHTML=
+`ls_item = VALUE #(
+  matnr = '${m}'
+  menge = ${q}
+  werks = '${w}'
+  lifnr = '${l}' ).`;
+  document.getElementById('val-savings').innerHTML=
+    `<span class="result-badge rb-green" style="justify-content:center;">✨ 4 lignes → 1 expression VALUE</span>`;
+}
+buildVal();
+
+// ── SLIDE 6 : FOR Loop Simulator ──
+let forRunning=false;
+async function runFor(){
+  if(forRunning)return; forRunning=true;
+  resetFor(false);
+  const shipRows=document.querySelectorAll('.ship-row');
+  const cityOut=document.getElementById('city-out');
+  cityOut.innerHTML='';
+  // Step 1: iterate each ship with a small delay
+  for(let i=0;i<shipRows.length;i++){
+    await sleep(380);
+    const r=shipRows[i];
+    if(r.dataset.route==='R0001'){
+      r.classList.add('match');
+      await sleep(250);
+      const city=r.dataset.city;
+      const tag=document.createElement('span');
+      tag.className='city-tag';
+      tag.textContent=city;
+      cityOut.appendChild(tag);
+    } else {
+      r.classList.add('no-match');
+    }
+  }
+  forRunning=false;
+}
+function resetFor(full=true){
+  forRunning=false;
+  document.querySelectorAll('.ship-row').forEach(r=>{r.classList.remove('match','no-match','moved');});
+  if(full) document.getElementById('city-out').innerHTML='<span style="font-size:10px;color:var(--light);font-family:\'Fira Code\',monospace;">← vide, cliquez Run</span>';
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ── SLIDE 7 : COND / SWITCH ──
+function updateCond(v){
+  v=parseInt(v);
+  document.getElementById('mult-val').textContent=v;
+  const map={0:100,1:10,3:0.1};
+  const result=map.hasOwnProperty(v)?map[v]:1;
+  // Reset all
+  ['cw0','cw1','cw3','cwelse','sw0','sw1','sw3','swelse'].forEach(id=>{
+    document.getElementById(id).classList.remove('lit');
+  });
+  // Light up matching
+  if(v===0){document.getElementById('cw0').classList.add('lit');document.getElementById('sw0').classList.add('lit');}
+  else if(v===1){document.getElementById('cw1').classList.add('lit');document.getElementById('sw1').classList.add('lit');}
+  else if(v===3){document.getElementById('cw3').classList.add('lit');document.getElementById('sw3').classList.add('lit');}
+  else{document.getElementById('cwelse').classList.add('lit');document.getElementById('swelse').classList.add('lit');}
+  document.getElementById('mult-result').textContent=`lv_multiplier = ${result}`;
+}
+updateCond(1);
+
+// ── SLIDE 8 : CORRESPONDING & String ──
+const corrData={ebeln:"'4500001'",bukrs:"'1000'",lifnr:"'V001'"};
+function runCorr(){
+  const fields=['ebeln','bukrs','lifnr'];
+  const lines=[document.getElementById('al1'),document.getElementById('al2'),document.getElementById('al3')];
+  document.getElementById('arr-icon').style.color='var(--green)';
+  fields.forEach((f,i)=>{
+    setTimeout(()=>{
+      document.getElementById(`f-${f}`).classList.add('matched');
+      document.getElementById(`t-${f}`).classList.add('matched');
+      document.getElementById(`tv-${f}`).textContent=corrData[f];
+      document.getElementById(`tv-${f}`).style.color='var(--green)';
+      lines[i].classList.add('active');
+    }, i*320);
+  });
+  setTimeout(()=>{
+    document.getElementById('t-extra').classList.add('no-match');
+    document.getElementById('tv-extra').textContent='—';
+  },1100);
+}
+function resetCorr(){
+  ['ebeln','bukrs','lifnr'].forEach(f=>{
+    document.getElementById(`f-${f}`).classList.remove('matched');
+    document.getElementById(`t-${f}`).classList.remove('matched');
+    document.getElementById(`tv-${f}`).textContent='—';
+    document.getElementById(`tv-${f}`).style.color='var(--muted)';
+  });
+  ['al1','al2','al3'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('arr-icon').style.color='var(--b300)';
+  document.getElementById('t-extra').classList.remove('no-match');
+}
+function buildStr(){
+  const nom=document.getElementById('st-nom').value||'';
+  const soc=document.getElementById('st-soc').value||'';
+  document.getElementById('str-out').innerHTML=
+    `<span style="color:var(--tp)">DATA</span>(<span style="color:var(--vr)">msg</span>) = <span style="color:var(--str)">|Bonjour { <span style="color:var(--vr)">${nom}</span> } — Bienvenue chez { <span style="color:var(--vr)">${soc}</span> } !|</span>.`+
+    `<br><br><span style="color:var(--light)">\" Résultat : </span><span style="color:var(--green)">Bonjour ${nom} — Bienvenue chez ${soc} !</span>`;
+}
+buildStr();
+</script>
+</body>
+</html>

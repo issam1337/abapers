@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABAP — Sélections & Boucles | Viseo University</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#EDF5FF; --white:#FFF; --b50:#EFF6FF; --b100:#DBEAFE;
+  --b200:#BFDBFE; --b300:#93C5FD; --b400:#60A5FA; --b500:#3B82F6;
+  --b600:#2563EB; --b700:#1D4ED8; --b800:#1E40AF; --b900:#1E3A5F;
+  --text:#0F172A; --mid:#1E293B; --muted:#475569; --light:#94A3B8;
+  --g500:#10B981; --g100:#D1FAE5; --g700:#047857;
+  --r500:#EF4444; --r100:#FEE2E2; --r700:#B91C1C;
+  --a500:#F59E0B; --a100:#FEF3C7; --a700:#B45309;
+  --p500:#8B5CF6; --p100:#EDE9FE; --p700:#6D28D9;
+  --shadow:0 1px 3px rgba(15,23,42,.07),0 4px 16px rgba(37,99,235,.09);
+  --shadow-lg:0 4px 32px rgba(37,99,235,.16),0 1px 4px rgba(15,23,42,.08);
+  --radius:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+
+/* BG */
+.blobs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.bl{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;animation:drift 20s ease-in-out infinite;}
+.bl1{width:600px;height:600px;background:#60A5FA;top:-200px;right:-150px;animation-delay:0s;}
+.bl2{width:400px;height:400px;background:#93C5FD;bottom:-150px;left:-100px;animation-delay:-8s;}
+.bl3{width:300px;height:300px;background:#BFDBFE;top:35%;left:40%;animation-delay:-15s;}
+@keyframes drift{0%,100%{transform:translate(0,0)}40%{transform:translate(25px,-18px)}70%{transform:translate(-15px,25px)}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(255,255,255,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--b200);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:300;}
+.nl{display:flex;align-items:center;gap:10px;}
+.badge{padding:3px 10px;background:var(--b600);color:#fff;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.badge.g{background:var(--g500);}
+.badge.o{background:var(--a500);}
+.nav-t{font-size:13px;font-weight:600;color:var(--muted);}
+.nav-t strong{color:var(--b700);}
+.nr{display:flex;align-items:center;gap:6px;}
+.nc{font-family:'Fira Code',monospace;font-size:11px;color:var(--muted);padding:0 12px;}
+.nc b{color:var(--b600);}
+.nb{width:32px;height:32px;border:1.5px solid var(--b200);background:var(--white);color:var(--muted);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;font-family:inherit;}
+.nb:hover{border-color:var(--b500);color:var(--b600);background:var(--b50);}
+.nb:disabled{opacity:.3;cursor:not-allowed;}
+
+/* PROGRESS */
+#pb{position:fixed;top:52px;left:0;height:3px;background:linear-gradient(90deg,var(--b400),var(--b600),var(--g500));transition:width .5s cubic-bezier(.4,0,.2,1);z-index:301;}
+
+/* SLIDES */
+#sw{position:fixed;top:52px;left:0;right:0;bottom:0;overflow:hidden;z-index:1;}
+.slide{position:absolute;inset:0;opacity:0;transform:translateY(20px);transition:opacity .48s cubic-bezier(.4,0,.2,1),transform .48s cubic-bezier(.4,0,.2,1);pointer-events:none;display:flex;flex-direction:column;padding:22px 28px 44px;gap:0;}
+.slide.active{opacity:1;transform:translateY(0);pointer-events:all;}
+.slide.out{opacity:0;transform:translateY(-20px);}
+
+/* DOTS */
+#dots{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:300;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--b200);cursor:pointer;transition:all .3s;}
+.dot.on{width:20px;border-radius:3px;background:var(--b500);}
+
+/* SLIDE HEADER */
+.shd{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-shrink:0;}
+.snum{padding:3px 10px;background:var(--b600);color:#fff;border-radius:6px;font-family:'Fira Code',monospace;font-size:10px;font-weight:600;}
+.snum.g{background:var(--g500);}
+.snum.o{background:var(--a500);}
+.snum.r{background:var(--r500);}
+.snum.p{background:var(--p500);}
+.sttl{font-size:clamp(17px,2vw,22px);font-weight:800;color:var(--b900);letter-spacing:-.02em;}
+.sttl em{color:var(--b500);font-style:normal;}
+.sttl .ge{color:var(--g500);}
+.sttl .oe{color:var(--a500);}
+.sttl .re{color:var(--r500);}
+.sttl .pe{color:var(--p500);}
+.stag{margin-left:auto;padding:3px 10px;border-radius:100px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.stag.read{background:var(--b100);color:var(--b700);}
+.stag.write{background:var(--g100);color:var(--g700);}
+.stag.delete{background:var(--r100);color:var(--r700);}
+.stag.loop{background:var(--p100);color:var(--p700);}
+.stag.util{background:var(--a100);color:var(--a700);}
+
+/* MAIN LAYOUT */
+.mcols{display:grid;gap:16px;flex:1;min-height:0;}
+.mcols.c2{grid-template-columns:1fr 1fr;}
+.mcols.c3{grid-template-columns:1fr 1fr 1fr;}
+.mcols.c21{grid-template-columns:2fr 1.4fr;}
+.mcols.c12{grid-template-columns:1.4fr 2fr;}
+
+/* CARDS */
+.card{background:var(--white);border:1.5px solid var(--b100);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;}
+.card-hd{padding:9px 14px;border-bottom:1px solid var(--b100);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.card-hd-icon{font-size:15px;}
+.card-hd-title{font-size:11px;font-weight:700;color:var(--mid);letter-spacing:.04em;}
+.card-hd-sub{font-size:9px;color:var(--light);margin-top:1px;}
+.card-hd.blue{background:linear-gradient(135deg,var(--b700),var(--b500));border:none;}
+.card-hd.blue .card-hd-title,.card-hd.blue .card-hd-sub,.card-hd.blue .card-hd-icon{color:#fff!important;opacity:1;}
+.card-hd.blue .card-hd-sub{opacity:.75;}
+.card-hd.green{background:linear-gradient(135deg,var(--g700),var(--g500));border:none;}
+.card-hd.green .card-hd-title,.card-hd.green .card-hd-sub,.card-hd.green .card-hd-icon{color:#fff!important;opacity:1;}
+.card-hd.green .card-hd-sub{opacity:.75;}
+.card-hd.red{background:linear-gradient(135deg,var(--r700),var(--r500));border:none;}
+.card-hd.red .card-hd-title,.card-hd.red .card-hd-sub,.card-hd.red .card-hd-icon{color:#fff!important;opacity:1;}
+.card-hd.amber{background:linear-gradient(135deg,var(--a700),var(--a500));border:none;}
+.card-hd.amber .card-hd-title,.card-hd.amber .card-hd-sub,.card-hd.amber .card-hd-icon{color:#fff!important;opacity:1;}
+.card-hd.purple{background:linear-gradient(135deg,var(--p700),var(--p500));border:none;}
+.card-hd.purple .card-hd-title,.card-hd.purple .card-hd-sub,.card-hd.purple .card-hd-icon{color:#fff!important;opacity:1;}
+.card-body{flex:1;padding:12px 14px;overflow-y:auto;min-height:0;}
+.card-body::-webkit-scrollbar{width:3px;}
+.card-body::-webkit-scrollbar-thumb{background:var(--b200);border-radius:2px;}
+
+/* DB TABLE */
+.dbtable{width:100%;border-collapse:collapse;font-family:'Fira Code',monospace;font-size:10px;}
+.dbtable th{padding:5px 8px;background:var(--b600);color:#fff;text-align:left;font-weight:600;font-size:9px;letter-spacing:.06em;position:sticky;top:0;}
+.dbtable td{padding:5px 8px;border-bottom:1px solid var(--b50);color:var(--mid);transition:all .35s;white-space:nowrap;}
+.dbtable tr:hover td{background:var(--b50);}
+.dbtable tr.sel td{background:rgba(59,130,246,.13);color:var(--b700);font-weight:600;}
+.dbtable tr.sel td:first-child{border-left:3px solid var(--b500);}
+.dbtable tr.ins td{background:rgba(16,185,129,.13);color:var(--g700);font-weight:600;animation:rowpop .4s ease;}
+.dbtable tr.ins td:first-child{border-left:3px solid var(--g500);}
+.dbtable tr.upd td{background:rgba(245,158,11,.13);color:var(--a700);font-weight:600;animation:rowpop .4s ease;}
+.dbtable tr.upd td:first-child{border-left:3px solid var(--a500);}
+.dbtable tr.del td{background:rgba(239,68,68,.10);color:var(--r500);text-decoration:line-through;animation:rowdel .5s ease;}
+.dbtable tr.del td:first-child{border-left:3px solid var(--r500);}
+.dbtable tr.dim td{opacity:.28;filter:grayscale(.8);}
+.dbtable tr.loop-cur td{background:rgba(139,92,246,.13);color:var(--p700);font-weight:600;}
+.dbtable tr.loop-cur td:first-child{border-left:3px solid var(--p500);}
+@keyframes rowpop{0%{transform:scaleY(.5);opacity:0}100%{transform:scaleY(1);opacity:1}}
+@keyframes rowdel{0%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(30px)}}
+
+/* CODE DISPLAY */
+pre.code{font-family:'Fira Code',monospace;font-size:10.5px;line-height:1.8;padding:10px 12px;background:var(--b50);border:1px solid var(--b100);border-radius:8px;overflow-x:auto;white-space:pre;}
+.kw{color:#1D4ED8;font-weight:600;}
+.str{color:#059669;}
+.vr{color:#7C3AED;}
+.tp{color:#B45309;}
+.fn{color:#0369A1;}
+.nm{color:#DC2626;}
+.cm{color:#94A3B8;font-style:italic;}
+.hl{background:rgba(59,130,246,.12);border-radius:2px;}
+
+/* CONTROLS */
+.pg-label{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;display:block;}
+.pg-input,.pg-select{width:100%;padding:7px 10px;border:1.5px solid var(--b200);border-radius:8px;font-family:'Fira Code',monospace;font-size:11px;color:var(--text);background:var(--white);outline:none;transition:border-color .2s;}
+.pg-input:focus,.pg-select:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.1);}
+.pg-select{cursor:pointer;}
+.btn{padding:7px 16px;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn.primary{background:var(--b600);color:#fff;}
+.btn.primary:hover{background:var(--b700);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3);}
+.btn.success{background:var(--g500);color:#fff;}
+.btn.success:hover{background:var(--g700);}
+.btn.danger{background:var(--r500);color:#fff;}
+.btn.danger:hover{background:var(--r700);}
+.btn.warn{background:var(--a500);color:#fff;}
+.btn.warn:hover{background:var(--a700);}
+.btn.ghost{background:var(--b50);color:var(--b600);border:1.5px solid var(--b200);}
+.btn.ghost:hover{background:var(--b100);}
+.btn:active{transform:translateY(0)!important;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.result{padding:8px 12px;border-radius:8px;font-family:'Fira Code',monospace;font-size:11px;margin-top:8px;line-height:1.6;min-height:32px;transition:all .3s;}
+.result.ok{background:var(--g100);color:var(--g700);border:1px solid #6EE7B7;}
+.result.err{background:var(--r100);color:var(--r700);border:1px solid #FCA5A5;}
+.result.info{background:var(--b100);color:var(--b700);border:1px solid var(--b300);}
+.result.warn{background:var(--a100);color:var(--a700);border:1px solid #FCD34D;}
+@keyframes flash{0%{filter:brightness(1.4)}100%{filter:brightness(1)}}
+.flash{animation:flash .5s;}
+
+/* CHIPS / TABS */
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.tab{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--b200);color:var(--muted);background:var(--white);transition:all .2s;}
+.tab:hover{border-color:var(--b400);color:var(--b600);}
+.tab.on{background:var(--b600);color:#fff;border-color:var(--b600);}
+.tab.g.on{background:var(--g500);border-color:var(--g500);}
+.tab.r.on{background:var(--r500);border-color:var(--r500);}
+.tab.o.on{background:var(--a500);border-color:var(--a500);}
+
+/* MISC */
+.gap8{display:flex;flex-direction:column;gap:8px;}
+.gap6{display:flex;flex-direction:column;gap:6px;}
+.fr{display:flex;align-items:center;gap:8px;}
+.fr2{display:flex;gap:8px;}
+.ml-auto{margin-left:auto;}
+.badge-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;}
+.bp-b{background:var(--b100);color:var(--b700);}
+.bp-g{background:var(--g100);color:var(--g700);}
+.bp-r{background:var(--r100);color:var(--r700);}
+.bp-o{background:var(--a100);color:var(--a700);}
+.bp-p{background:var(--p100);color:var(--p700);}
+.divider{border:none;border-top:1px solid var(--b100);margin:10px 0;}
+.hint{padding:8px 12px;background:var(--b50);border-left:3px solid var(--b400);border-radius:0 8px 8px 0;font-size:11px;color:var(--mid);line-height:1.6;}
+.hint strong{color:var(--b700);}
+.key-hint{position:fixed;bottom:14px;right:20px;font-size:10px;color:var(--light);font-family:'Fira Code',monospace;display:flex;gap:4px;align-items:center;}
+.key{padding:2px 6px;background:var(--white);border:1px solid var(--b200);border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+
+/* COVER */
+.cover{align-items:center;justify-content:center;text-align:center;}
+.cov-inner{max-width:800px;position:relative;}
+.cov-eye{display:inline-flex;align-items:center;gap:8px;padding:5px 16px;border:1.5px solid var(--b300);border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--b600);background:var(--white);margin-bottom:20px;box-shadow:var(--shadow);}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--b500);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.cov-h{font-size:clamp(40px,6.5vw,72px);font-weight:900;line-height:1.0;letter-spacing:-.03em;color:var(--b900);margin-bottom:14px;}
+.cov-h em{color:var(--b500);font-style:normal;}
+.cov-sub{font-size:16px;color:var(--muted);margin-bottom:32px;line-height:1.5;}
+.cov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:680px;margin:0 auto;}
+.cov-card{padding:12px 14px;background:var(--white);border:1.5px solid var(--b100);border-radius:10px;cursor:pointer;transition:all .25s;box-shadow:var(--shadow);}
+.cov-card:hover{border-color:var(--b400);transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.cov-card .icon{font-size:20px;margin-bottom:6px;}
+.cov-card .lbl{font-size:11px;font-weight:700;color:var(--mid);}
+.cov-card .sub{font-size:9px;color:var(--light);margin-top:2px;}
+
+/* TOC */
+.toc-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:860px;margin:0 auto;}
+.toc-it{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--white);border:1.5px solid var(--b100);border-radius:var(--radius);cursor:pointer;transition:all .22s;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.toc-it::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;transform:scaleY(0);transition:transform .22s;}
+.toc-it:hover{border-color:var(--b300);transform:translateX(3px);}
+.toc-it:hover::before{transform:scaleY(1);}
+.toc-it.blue::before{background:var(--b500);}
+.toc-it.green::before{background:var(--g500);}
+.toc-it.red::before{background:var(--r500);}
+.toc-it.purple::before{background:var(--p500);}
+.toc-it.amber::before{background:var(--a500);}
+.toc-n{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Fira Code',monospace;font-size:11px;font-weight:700;flex-shrink:0;color:#fff;}
+.toc-n.b{background:var(--b600);}
+.toc-n.g{background:var(--g500);}
+.toc-n.r{background:var(--r500);}
+.toc-n.p{background:var(--p500);}
+.toc-n.o{background:var(--a500);}
+.toc-lbl{font-size:13px;font-weight:700;color:var(--text);}
+.toc-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.toc-arr{margin-left:auto;color:var(--b300);font-size:13px;transition:transform .2s;}
+.toc-it:hover .toc-arr{transform:translateX(3px);color:var(--b500);}
+
+/* LOOP CURSOR */
+.loop-ptr{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:var(--p100);color:var(--p700);border-radius:100px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;}
+
+/* SYNTAX VARIANT BLOCKS */
+.syn-block{background:var(--white);border:1.5px solid var(--b100);border-radius:10px;overflow:hidden;margin-bottom:8px;}
+.syn-hd{padding:6px 12px;background:var(--b50);border-bottom:1px solid var(--b100);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--b600);display:flex;align-items:center;gap:6px;}
+.syn-body{padding:8px 12px;}
+pre.syn{font-family:'Fira Code',monospace;font-size:10px;line-height:1.7;white-space:pre;overflow-x:auto;}
+
+/* JOIN DIAGRAM */
+.join-viz{display:flex;align-items:center;justify-content:center;gap:0;padding:8px 0;}
+.join-circle{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fira Code',monospace;font-size:9px;font-weight:700;color:#fff;text-align:center;transition:all .3s;}
+.join-circle.left{background:var(--b500);margin-right:-20px;z-index:1;}
+.join-circle.right{background:var(--g500);margin-left:-20px;}
+.join-circle.active{box-shadow:0 0 0 4px rgba(37,99,235,.3);}
+.join-label{font-size:10px;font-weight:700;color:var(--b700);padding:0 12px;text-align:center;}
+
+/* STATS BAR */
+.stat-row{display:flex;gap:8px;margin-bottom:12px;flex-shrink:0;}
+.stat-pill{padding:4px 12px;border-radius:100px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;border:1px solid transparent;}
+
+/* DELETE PANEL */
+.del-opts{display:flex;flex-direction:column;gap:8px;}
+
+/* SORT VIZ */
+.sort-bar{display:flex;align-items:flex-end;gap:3px;height:60px;margin:8px 0;}
+.sort-b{flex:1;border-radius:4px 4px 0 0;transition:all .4s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center;font-family:'Fira Code',monospace;font-size:8px;color:#fff;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="blobs"><div class="bl bl1"></div><div class="bl bl2"></div><div class="bl bl3"></div></div>
+<div id="pb"></div>
+<nav>
+  <div class="nl">
+    <span class="badge">ABAP</span>
+    <span class="nav-t"><strong>Viseo University</strong> · Sélections &amp; Boucles</span>
+  </div>
+  <div class="nr">
+    <button class="nb" id="bp">&#8592;</button>
+    <div class="nc"><b id="nc">1</b> / <span id="nt">10</span></div>
+    <button class="nb" id="bn">&#8594;</button>
+  </div>
+</nav>
+<div id="dots"></div>
+<div class="key-hint"><span class="key">←</span><span class="key">→</span></div>
+<div id="sw">
+
+<!-- ══ SLIDE 1 · COVER ══ -->
+<div class="slide active cover" id="s0">
+<div class="cov-inner">
+  <div class="cov-eye"><span class="pulse"></span> Formation ABAP · Sélections &amp; Boucles</div>
+  <h1 class="cov-h">Maîtrisez les<br><em>données SAP</em></h1>
+  <p class="cov-sub">SELECT · READ TABLE · LOOP AT · INSERT · UPDATE · DELETE<br>Simulez chaque opération sur une vraie base de données en mémoire</p>
+  <div class="cov-grid">
+    <div class="cov-card" onclick="goTo(2)"><div class="icon">🔍</div><div class="lbl">SELECT</div><div class="sub">Lecture BDD</div></div>
+    <div class="cov-card" onclick="goTo(3)"><div class="icon">🔗</div><div class="lbl">JOIN & Avancé</div><div class="sub">Multi-tables</div></div>
+    <div class="cov-card" onclick="goTo(4)"><div class="icon">📋</div><div class="lbl">READ TABLE</div><div class="sub">Table interne</div></div>
+    <div class="cov-card" onclick="goTo(5)"><div class="icon">🔁</div><div class="lbl">LOOP AT</div><div class="sub">Itération</div></div>
+    <div class="cov-card" onclick="goTo(6)"><div class="icon">➕</div><div class="lbl">INSERT</div><div class="sub">Insertion</div></div>
+    <div class="cov-card" onclick="goTo(7)"><div class="icon">✏️</div><div class="lbl">UPDATE</div><div class="sub">Mise à jour</div></div>
+    <div class="cov-card" onclick="goTo(8)"><div class="icon">🗑️</div><div class="lbl">DELETE</div><div class="sub">Suppression</div></div>
+    <div class="cov-card" onclick="goTo(9)"><div class="icon">⚙️</div><div class="lbl">SORT·COLLECT</div><div class="sub">Utilitaires</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 2 · SOMMAIRE ══ -->
+<div class="slide" id="s1">
+<div class="shd"><span class="snum">00</span><h2 class="sttl">Sommaire — <em>Plan de formation</em></h2></div>
+<div class="toc-g">
+  <div class="toc-it blue" onclick="goTo(2)"><div class="toc-n b">01</div><div><div class="toc-lbl">SELECT — Lecture base de données</div><div class="toc-sub">INTO TABLE, WHERE, SINGLE, UP TO n ROWS</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it blue" onclick="goTo(3)"><div class="toc-n b">02</div><div><div class="toc-lbl">SELECT Avancé — JOIN &amp; Agrégats</div><div class="toc-sub">INNER/LEFT JOIN, GROUP BY, ORDER BY, Subquery</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it blue" onclick="goTo(4)"><div class="toc-n b">03</div><div><div class="toc-lbl">READ TABLE — Table interne</div><div class="toc-sub">INDEX, WITH KEY, BINARY SEARCH, ASSIGNING</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it purple" onclick="goTo(5)"><div class="toc-n p">04</div><div><div class="toc-lbl">LOOP AT — Itération</div><div class="toc-sub">WHERE, ASSIGNING, AT NEW, GROUP BY</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it green" onclick="goTo(6)"><div class="toc-n g">05</div><div><div class="toc-lbl">INSERT / APPEND — Insertion</div><div class="toc-sub">INSERT INTO DB, APPEND TO itab, INSERT itab</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it amber" onclick="goTo(7)"><div class="toc-n o">06</div><div><div class="toc-lbl">UPDATE / MODIFY — Mise à jour</div><div class="toc-sub">UPDATE SET, MODIFY itab, FROM structure</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it red" onclick="goTo(8)"><div class="toc-n r">07</div><div><div class="toc-lbl">DELETE — Suppression</div><div class="toc-sub">WHERE, FROM itab, ADJACENT DUPLICATES</div></div><div class="toc-arr">→</div></div>
+  <div class="toc-it amber" onclick="goTo(9)"><div class="toc-n o">08</div><div><div class="toc-lbl">SORT · COLLECT · DESCRIBE</div><div class="toc-sub">Tri, agrégation, statistiques de table</div></div><div class="toc-arr">→</div></div>
+</div>
+</div>
+
+<!-- ══ SLIDE 3 · SELECT BASIC ══ -->
+<div class="slide" id="s2">
+<div class="shd"><span class="snum">01</span><h2 class="sttl"><em>SELECT</em> — Lecture base de données</h2><span class="stag read">READ</span></div>
+<div class="mcols c21" style="flex:1;min-height:0;">
+
+  <!-- LEFT: syntax variants -->
+  <div class="card">
+    <div class="card-hd blue"><span class="card-hd-icon">📖</span><div><div class="card-hd-title">Variantes SELECT</div><div class="card-hd-sub">Syntaxes essentielles</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="sel-tabs">
+        <div class="tab on" onclick="showSel(0,this)">* INTO TABLE</div>
+        <div class="tab" onclick="showSel(1,this)">SINGLE</div>
+        <div class="tab" onclick="showSel(2,this)">WHERE</div>
+        <div class="tab" onclick="showSel(3,this)">UP TO N ROWS</div>
+        <div class="tab" onclick="showSel(4,this)">Champs</div>
+      </div>
+      <div id="sel-code">
+        <pre class="code"><span class="cm">" Sélection complète — tous les enregistrements</span>
+<span class="kw">SELECT</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_orders</span>).</pre>
+      </div>
+      <hr class="divider">
+      <div class="hint">💡 <strong>sy-subrc</strong> vaut <code>0</code> si au moins une ligne est trouvée, <code>4</code> sinon. Toujours vérifier après un SELECT.</div>
+
+      <!-- WHERE builder -->
+      <div style="background:var(--b50);border:1.5px solid var(--b200);border-radius:10px;padding:12px;">
+        <div class="pg-label">🔧 Constructeur WHERE</div>
+        <div class="fr2" style="gap:6px;margin-bottom:6px;">
+          <select class="pg-select" id="w-field" style="flex:1;" onchange="buildWhere()">
+            <option value="mandt">MANDT</option>
+            <option value="vkorg" selected>VKORG</option>
+            <option value="kunnr">KUNNR</option>
+            <option value="auart">AUART</option>
+            <option value="netwr">NETWR</option>
+          </select>
+          <select class="pg-select" id="w-op" style="flex:1;" onchange="buildWhere()">
+            <option>=</option><option>&gt;</option><option>&lt;</option>
+            <option>>=</option><option>&lt;=</option><option>LIKE</option><option>IN</option>
+          </select>
+          <input class="pg-input" id="w-val" value="'1000'" style="flex:1;" oninput="buildWhere()">
+        </div>
+        <pre class="code" id="where-code" style="font-size:10px;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: live DB simulator -->
+  <div class="card">
+    <div class="card-hd blue"><span class="card-hd-icon">🗄️</span><div><div class="card-hd-title">Table ZVBAK — Base de données live</div><div class="card-hd-sub">Simulez vos requêtes SELECT sur ces données</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;min-height:0;" id="sel-db-wrap">
+        <table class="dbtable" id="sel-db"></table>
+      </div>
+      <div class="divider" style="margin:0;"></div>
+      <div class="fr2" style="flex-wrap:wrap;gap:6px;">
+        <select class="pg-select" id="sel-type" style="flex:1;">
+          <option value="all">SELECT * — Tout</option>
+          <option value="single">SELECT SINGLE — 1 ligne</option>
+          <option value="where-vkorg">WHERE VKORG = '1000'</option>
+          <option value="where-auart">WHERE AUART = 'TA'</option>
+          <option value="where-netwr">WHERE NETWR &gt; 5000</option>
+          <option value="top3">UP TO 3 ROWS</option>
+          <option value="like">WHERE KUNNR LIKE 'C00%'</option>
+        </select>
+        <button class="btn primary" onclick="runSelect()">▶ Exécuter</button>
+        <button class="btn ghost" onclick="resetDB()">↺</button>
+      </div>
+      <div class="result info" id="sel-result">← Choisissez une variante et cliquez Exécuter</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══ SLIDE 4 · SELECT ADVANCED ══ -->
+<div class="slide" id="s3">
+<div class="shd"><span class="snum">02</span><h2 class="sttl">SELECT <em>Avancé</em> — JOIN &amp; Agrégats</h2><span class="stag read">READ</span></div>
+<div class="mcols c2" style="flex:1;min-height:0;">
+
+  <!-- LEFT -->
+  <div class="card">
+    <div class="card-hd blue"><span class="card-hd-icon">🔗</span><div><div class="card-hd-title">Jointures &amp; Agrégats</div><div class="card-hd-sub">INNER JOIN · GROUP BY · ORDER BY · Subquery</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="adv-tabs">
+        <div class="tab on" onclick="showAdv(0,this)">INNER JOIN</div>
+        <div class="tab" onclick="showAdv(1,this)">LEFT JOIN</div>
+        <div class="tab" onclick="showAdv(2,this)">GROUP BY</div>
+        <div class="tab" onclick="showAdv(3,this)">ORDER BY</div>
+        <div class="tab" onclick="showAdv(4,this)">Subquery</div>
+      </div>
+      <div id="adv-code"></div>
+      <hr class="divider">
+      <!-- JOIN Diagram -->
+      <div id="join-diag" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;">
+        <div class="join-viz">
+          <div style="text-align:center;"><div class="join-circle left" id="jl">ZVBAK<br>Entête</div><div style="font-size:9px;color:var(--b600);margin-top:4px;">Commandes</div></div>
+          <div class="join-label" id="join-lbl">INNER<br>JOIN</div>
+          <div style="text-align:center;"><div class="join-circle right" id="jr">ZVBAP<br>Postes</div><div style="font-size:9px;color:var(--g700);margin-top:4px;">Articles</div></div>
+        </div>
+        <div id="join-desc" style="font-size:10px;color:var(--muted);text-align:center;max-width:280px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: results -->
+  <div class="card">
+    <div class="card-hd blue"><span class="card-hd-icon">📊</span><div><div class="card-hd-title">Résultats de la requête</div><div class="card-hd-sub">Données simulées — ZVBAK ⨝ ZVBAP</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;" id="adv-result-wrap">
+        <div style="color:var(--light);font-size:11px;font-family:'Fira Code',monospace;padding:8px 0;">← Sélectionnez une variante et cliquez Exécuter</div>
+      </div>
+      <div class="divider" style="margin:0;"></div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="runAdv()">▶ Exécuter la requête</button>
+        <button class="btn ghost" onclick="clearAdv()">✕ Effacer</button>
+      </div>
+      <div class="result info" id="adv-result-bar">Prêt</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══ SLIDE 5 · READ TABLE ══ -->
+<div class="slide" id="s4">
+<div class="shd"><span class="snum">03</span><h2 class="sttl"><em>READ TABLE</em> — Table interne</h2><span class="stag read">READ</span></div>
+<div class="mcols c21" style="flex:1;min-height:0;">
+
+  <div class="card">
+    <div class="card-hd blue"><span class="card-hd-icon">📋</span><div><div class="card-hd-title">Syntaxes READ TABLE</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="rt-tabs">
+        <div class="tab on" onclick="showRT(0,this)">INDEX</div>
+        <div class="tab" onclick="showRT(1,this)">WITH KEY</div>
+        <div class="tab" onclick="showRT(2,this)">BINARY SEARCH</div>
+        <div class="tab" onclick="showRT(3,this)">ASSIGNING</div>
+        <div class="tab" onclick="showRT(4,this)">7.40 Style</div>
+      </div>
+      <div id="rt-code"></div>
+      <hr class="divider">
+      <div class="hint" id="rt-hint">💡 INDEX accède directement par position (O(1)), très performant.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd blue"><span class="card-hd-icon">🔬</span><div><div class="card-hd-title">Simulateur READ TABLE — lt_orders</div><div class="card-hd-sub">Cliquez une variante pour voir quelle ligne est ciblée</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;">
+        <table class="dbtable" id="rt-db"></table>
+      </div>
+      <hr class="divider" style="margin:0;"/>
+      <div class="fr2" style="flex-wrap:wrap;gap:6px;">
+        <select class="pg-select" id="rt-type" style="flex:1;" onchange="showRTSelect()">
+          <option value="idx2">INDEX 2</option>
+          <option value="idx4">INDEX 4</option>
+          <option value="key-C001">WITH KEY kunnr='C001'</option>
+          <option value="key-C003">WITH KEY kunnr='C003'</option>
+          <option value="key-TA">WITH KEY auart='TA'</option>
+          <option value="nofield">TRANSPORTING NO FIELDS</option>
+          <option value="7style">7.40 — itab[ kunnr='C002' ]</option>
+        </select>
+        <button class="btn primary" onclick="runRT()">▶ READ</button>
+        <button class="btn ghost" onclick="resetRT()">↺</button>
+      </div>
+      <div class="result info" id="rt-result">← Choisissez et cliquez READ</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 6 · LOOP AT ══ -->
+<div class="slide" id="s5">
+<div class="shd"><span class="snum p">04</span><h2 class="sttl"><em class="pe">LOOP AT</em> — Itération</h2><span class="stag loop">LOOP</span></div>
+<div class="mcols c21" style="flex:1;min-height:0;">
+
+  <div class="card">
+    <div class="card-hd purple"><span class="card-hd-icon">🔁</span><div><div class="card-hd-title">Syntaxes LOOP AT</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="lp-tabs">
+        <div class="tab on" onclick="showLP(0,this)">Basic</div>
+        <div class="tab" onclick="showLP(1,this)">WHERE</div>
+        <div class="tab" onclick="showLP(2,this)">ASSIGNING</div>
+        <div class="tab" onclick="showLP(3,this)">AT NEW</div>
+        <div class="tab" onclick="showLP(4,this)">GROUP BY</div>
+      </div>
+      <div id="lp-code"></div>
+      <hr class="divider">
+      <div class="hint" id="lp-hint">💡 <strong>LOOP AT...ASSIGNING</strong> donne un pointeur direct (field-symbol) sans copie — modifie la table en place.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd purple"><span class="card-hd-icon">🎬</span><div><div class="card-hd-title">Visualiseur LOOP — Curseur animé</div><div class="card-hd-sub">Regardez le curseur traverser chaque ligne</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;min-height:0;">
+        <table class="dbtable" id="lp-db"></table>
+      </div>
+      <hr class="divider" style="margin:0;"/>
+      <div class="fr2" style="flex-wrap:wrap;gap:6px;">
+        <select class="pg-select" id="lp-type" style="flex:1.5;">
+          <option value="all">LOOP AT — Tous</option>
+          <option value="where-TA">WHERE auart = 'TA'</option>
+          <option value="where-C001">WHERE kunnr = 'C001'</option>
+          <option value="where-big">WHERE netwr &gt; 5000</option>
+        </select>
+        <select class="pg-select" id="lp-speed" style="flex:1;">
+          <option value="700">Lent</option>
+          <option value="400" selected>Normal</option>
+          <option value="150">Rapide</option>
+        </select>
+        <button class="btn" style="background:var(--p500);color:#fff;" onclick="runLoop()">▶ LOOP</button>
+        <button class="btn ghost" onclick="stopLoop()">⏹</button>
+      </div>
+      <div class="fr" id="lp-status">
+        <span class="result info" id="lp-result" style="margin:0;flex:1;">Prêt — choisissez une variante</span>
+        <span class="loop-ptr" id="lp-ptr" style="display:none;">sy-tabix: —</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 7 · INSERT ══ -->
+<div class="slide" id="s6">
+<div class="shd"><span class="snum g">05</span><h2 class="sttl"><em class="ge">INSERT</em> &amp; APPEND — Insertion</h2><span class="stag write">WRITE</span></div>
+<div class="mcols c21" style="flex:1;min-height:0;">
+
+  <div class="card">
+    <div class="card-hd green"><span class="card-hd-icon">➕</span><div><div class="card-hd-title">Syntaxes d'insertion</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="ins-tabs">
+        <div class="tab on" onclick="showIns(0,this)">INSERT DB</div>
+        <div class="tab" onclick="showIns(1,this)">INSERT itab</div>
+        <div class="tab" onclick="showIns(2,this)">APPEND</div>
+        <div class="tab" onclick="showIns(3,this)">INSERT TABLE</div>
+      </div>
+      <div id="ins-code"></div>
+      <hr class="divider">
+      <div style="background:var(--g100);border:1.5px solid #6EE7B7;border-radius:10px;padding:12px;" class="gap8">
+        <div class="pg-label">🆕 Créer un nouvel enregistrement</div>
+        <div class="fr2" style="gap:6px;">
+          <div style="flex:1;"><div class="pg-label">VBELN</div><input class="pg-input" id="ins-vbeln" placeholder="0000000012"></div>
+          <div style="flex:1;"><div class="pg-label">KUNNR</div><input class="pg-input" id="ins-kunnr" placeholder="C005"></div>
+        </div>
+        <div class="fr2" style="gap:6px;">
+          <div style="flex:1;"><div class="pg-label">AUART</div>
+            <select class="pg-select" id="ins-auart"><option>TA</option><option>OR</option><option>CS</option><option>RE</option></select>
+          </div>
+          <div style="flex:1;"><div class="pg-label">NETWR</div><input class="pg-input" id="ins-netwr" placeholder="3500" type="number"></div>
+        </div>
+        <div><div class="pg-label">VKORG</div>
+          <select class="pg-select" id="ins-vkorg"><option>1000</option><option>2000</option><option>3000</option></select>
+        </div>
+        <div class="btn-row">
+          <button class="btn success" onclick="runInsert()">➕ INSERT / APPEND</button>
+          <button class="btn ghost" onclick="clearInsForm()">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd green"><span class="card-hd-icon">🗄️</span><div><div class="card-hd-title">Table ZVBAK — Insertion live</div><div class="card-hd-sub">Les nouvelles lignes apparaissent en vert</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;"><table class="dbtable" id="ins-db"></table></div>
+      <div class="result ok" id="ins-result" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 8 · UPDATE / MODIFY ══ -->
+<div class="slide" id="s7">
+<div class="shd"><span class="snum o">06</span><h2 class="sttl"><em class="oe">UPDATE</em> &amp; MODIFY — Mise à jour</h2><span class="stag write">WRITE</span></div>
+<div class="mcols c21" style="flex:1;min-height:0;">
+
+  <div class="card">
+    <div class="card-hd amber"><span class="card-hd-icon">✏️</span><div><div class="card-hd-title">Syntaxes de mise à jour</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="upd-tabs">
+        <div class="tab on" onclick="showUpd(0,this)">UPDATE SET</div>
+        <div class="tab" onclick="showUpd(1,this)">UPDATE FROM</div>
+        <div class="tab" onclick="showUpd(2,this)">MODIFY DB</div>
+        <div class="tab" onclick="showUpd(3,this)">MODIFY itab</div>
+      </div>
+      <div id="upd-code"></div>
+      <hr class="divider">
+      <div style="background:var(--a100);border:1.5px solid #FCD34D;border-radius:10px;padding:12px;" class="gap8">
+        <div class="pg-label">✏️ Modifier un enregistrement existant</div>
+        <div><div class="pg-label">Sélectionner la commande (VBELN)</div>
+          <select class="pg-select" id="upd-vbeln" onchange="showUpdFields()"></select>
+        </div>
+        <div class="fr2" style="gap:6px;">
+          <div style="flex:1;"><div class="pg-label">Champ à modifier</div>
+            <select class="pg-select" id="upd-field" onchange="showUpdFields()">
+              <option value="netwr">NETWR (Montant)</option>
+              <option value="auart">AUART (Type)</option>
+              <option value="vkorg">VKORG (Org.)</option>
+              <option value="kunnr">KUNNR (Client)</option>
+            </select>
+          </div>
+          <div style="flex:1;"><div class="pg-label">Nouvelle valeur</div><input class="pg-input" id="upd-val" value="9999"></div>
+        </div>
+        <pre class="code" id="upd-preview" style="font-size:10px;"></pre>
+        <div class="btn-row">
+          <button class="btn warn" onclick="runUpdate()">✏️ UPDATE</button>
+          <button class="btn ghost" onclick="resetAllDB()">↺ Reset DB</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd amber"><span class="card-hd-icon">🗄️</span><div><div class="card-hd-title">Table ZVBAK — Mise à jour live</div><div class="card-hd-sub">Les lignes modifiées s'illuminent en orange</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;"><table class="dbtable" id="upd-db"></table></div>
+      <div class="result warn" id="upd-result" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 9 · DELETE ══ -->
+<div class="slide" id="s8">
+<div class="shd"><span class="snum r">07</span><h2 class="sttl"><em class="re">DELETE</em> — Suppression</h2><span class="stag delete">DELETE</span></div>
+<div class="mcols c21" style="flex:1;min-height:0;">
+
+  <div class="card">
+    <div class="card-hd red"><span class="card-hd-icon">🗑️</span><div><div class="card-hd-title">Syntaxes DELETE</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="del-tabs">
+        <div class="tab on" onclick="showDel(0,this)">WHERE</div>
+        <div class="tab" onclick="showDel(1,this)">FROM itab</div>
+        <div class="tab" onclick="showDel(2,this)">INDEX</div>
+        <div class="tab" onclick="showDel(3,this)">ADJ. DUPLICATES</div>
+        <div class="tab" onclick="showDel(4,this)">REFRESH</div>
+      </div>
+      <div id="del-code"></div>
+      <hr class="divider">
+      <div style="background:var(--r100);border:1.5px solid #FCA5A5;border-radius:10px;padding:12px;" class="gap8">
+        <div class="pg-label">🗑️ Supprimer des enregistrements</div>
+        <div class="fr2" style="gap:6px;">
+          <div style="flex:1;"><div class="pg-label">Critère</div>
+            <select class="pg-select" id="del-type">
+              <option value="where-auart-RE">WHERE auart = 'RE'</option>
+              <option value="where-vkorg-2000">WHERE vkorg = '2000'</option>
+              <option value="where-netwr-low">WHERE netwr &lt; 2000</option>
+              <option value="idx3">DELETE INDEX 3 (itab)</option>
+              <option value="adj">ADJ DUPLICATES (kunnr)</option>
+              <option value="refresh">REFRESH / CLEAR (itab)</option>
+            </select>
+          </div>
+          <button class="btn danger" onclick="runDelete()" style="align-self:flex-end;">🗑️ DELETE</button>
+          <button class="btn ghost" onclick="resetAllDB()" style="align-self:flex-end;">↺</button>
+        </div>
+        <div class="result err" id="del-result" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd red"><span class="card-hd-icon">🗄️</span><div><div class="card-hd-title">Table ZVBAK — Suppression live</div><div class="card-hd-sub">Les lignes supprimées s'estompent puis disparaissent</div></div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="overflow-y:auto;flex:1;"><table class="dbtable" id="del-db"></table></div>
+      <div class="hint" style="flex-shrink:0;">⚠️ <strong>Attention :</strong> DELETE sans WHERE supprime tous les enregistrements. Toujours utiliser <code>sy-subrc</code> pour vérifier le résultat.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 10 · SORT / COLLECT / DESCRIBE ══ -->
+<div class="slide" id="s9">
+<div class="shd"><span class="snum o">08</span><h2 class="sttl"><em class="oe">SORT</em> · COLLECT · <em>DESCRIBE</em> — Utilitaires</h2><span class="stag util">UTIL</span></div>
+<div class="mcols c3" style="flex:1;min-height:0;">
+
+  <!-- SORT -->
+  <div class="card">
+    <div class="card-hd amber"><span class="card-hd-icon">↕️</span><div><div class="card-hd-title">SORT</div><div class="card-hd-sub">Tri de tables internes</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="sort-tabs">
+        <div class="tab on" onclick="showSort(0,this)">ASCENDING</div>
+        <div class="tab" onclick="showSort(1,this)">DESCENDING</div>
+        <div class="tab" onclick="showSort(2,this)">BY champ</div>
+        <div class="tab" onclick="showSort(3,this)">STABLE</div>
+      </div>
+      <div id="sort-code"></div>
+      <hr class="divider">
+      <div>
+        <div class="pg-label">Trier par</div>
+        <select class="pg-select" id="sort-field" style="margin-bottom:8px;">
+          <option value="netwr">NETWR</option><option value="kunnr">KUNNR</option>
+          <option value="auart">AUART</option><option value="vkorg">VKORG</option>
+        </select>
+        <div class="fr2" style="gap:6px;">
+          <button class="btn warn" onclick="runSort('asc')">↑ ASC</button>
+          <button class="btn warn" onclick="runSort('desc')">↓ DESC</button>
+        </div>
+      </div>
+      <div id="sort-viz" class="sort-bar"></div>
+      <div class="result info" id="sort-result">← Choisissez un champ et triez</div>
+    </div>
+  </div>
+
+  <!-- COLLECT -->
+  <div class="card">
+    <div class="card-hd amber"><span class="card-hd-icon">∑</span><div><div class="card-hd-title">COLLECT</div><div class="card-hd-sub">Agrégation par clé</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="col-tabs">
+        <div class="tab on" onclick="showCol(0,this)">COLLECT</div>
+        <div class="tab" onclick="showCol(1,this)">Équivalent 7.40</div>
+        <div class="tab" onclick="showCol(2,this)">Cas d'usage</div>
+      </div>
+      <div id="col-code"></div>
+      <hr class="divider">
+      <button class="btn warn" onclick="runCollect()">∑ Simuler COLLECT</button>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'Fira Code',monospace;">Agrège NETWR par KUNNR</div>
+      <div id="col-result-wrap" style="overflow-y:auto;max-height:120px;margin-top:4px;">
+        <div style="color:var(--light);font-size:10px;font-family:'Fira Code',monospace;">← Cliquez pour agréger</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIBE + autres -->
+  <div class="card">
+    <div class="card-hd amber"><span class="card-hd-icon">📏</span><div><div class="card-hd-title">DESCRIBE &amp; Utilitaires</div><div class="card-hd-sub">Statistiques, clear, free</div></div></div>
+    <div class="card-body gap8">
+      <div class="tabs" id="desc-tabs">
+        <div class="tab on" onclick="showDesc(0,this)">DESCRIBE</div>
+        <div class="tab" onclick="showDesc(1,this)">CLEAR / FREE</div>
+        <div class="tab" onclick="showDesc(2,this)">lines()</div>
+        <div class="tab" onclick="showDesc(3,this)">APPEND LINES</div>
+      </div>
+      <div id="desc-code"></div>
+      <hr class="divider">
+      <button class="btn warn" onclick="runDescribe()">📏 DESCRIBE TABLE</button>
+      <div id="desc-result-wrap" class="gap8" style="margin-top:6px;">
+        <div style="color:var(--light);font-size:10px;font-family:'Fira Code',monospace;">← Cliquez pour analyser la table</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+</div><!-- /sw -->
+
+<script>
+// ════════════════════════════════════════════
+// SHARED DATABASE (persists across slides)
+// ════════════════════════════════════════════
+const ORIG_DB = [
+  {vbeln:'0000000001',kunnr:'C001',auart:'TA',vkorg:'1000',netwr:12500,erdat:'20240101'},
+  {vbeln:'0000000002',kunnr:'C002',auart:'OR',vkorg:'1000',netwr:3200,erdat:'20240103'},
+  {vbeln:'0000000003',kunnr:'C001',auart:'TA',vkorg:'2000',netwr:8750,erdat:'20240105'},
+  {vbeln:'0000000004',kunnr:'C003',auart:'RE',vkorg:'1000',netwr:1500,erdat:'20240108'},
+  {vbeln:'0000000005',kunnr:'C004',auart:'CS',vkorg:'3000',netwr:6300,erdat:'20240110'},
+  {vbeln:'0000000006',kunnr:'C002',auart:'TA',vkorg:'2000',netwr:9100,erdat:'20240112'},
+  {vbeln:'0000000007',kunnr:'C003',auart:'OR',vkorg:'1000',netwr:2100,erdat:'20240115'},
+  {vbeln:'0000000008',kunnr:'C001',auart:'RE',vkorg:'3000',netwr:4400,erdat:'20240118'},
+];
+const VBAP_DB = [
+  {vbeln:'0000000001',posnr:'000010',matnr:'M001',maktx:'Laptop Pro',kwmeng:2,netpr:5000},
+  {vbeln:'0000000001',posnr:'000020',matnr:'M002',maktx:'Souris',kwmeng:5,netpr:50},
+  {vbeln:'0000000002',posnr:'000010',matnr:'M003',maktx:'Clavier',kwmeng:3,netpr:80},
+  {vbeln:'0000000003',posnr:'000010',matnr:'M001',maktx:'Laptop Pro',kwmeng:1,netpr:5000},
+  {vbeln:'0000000003',posnr:'000020',matnr:'M004',maktx:'Écran 4K',kwmeng:2,netpr:1200},
+  {vbeln:'0000000005',posnr:'000010',matnr:'M005',maktx:'Station dock',kwmeng:4,netpr:350},
+  {vbeln:'0000000006',posnr:'000010',matnr:'M001',maktx:'Laptop Pro',kwmeng:1,netpr:5000},
+  {vbeln:'0000000007',posnr:'000010',matnr:'M002',maktx:'Souris',kwmeng:10,netpr:50},
+];
+
+let db = ORIG_DB.map(r=>({...r}));
+const cols = ['vbeln','kunnr','auart','vkorg','netwr','erdat'];
+const colLabels = {vbeln:'VBELN',kunnr:'KUNNR',auart:'AUART',vkorg:'VKORG',netwr:'NETWR',erdat:'ERDAT'};
+
+function resetAllDB(){db=ORIG_DB.map(r=>({...r}));renderAllTables();showResult('upd-result','hide');showResult('ins-result','hide');showResult('del-result','hide');}
+function resetDB(){db=ORIG_DB.map(r=>({...r}));renderAllTables();}
+
+function renderTable(tableId,data,highlightFn){
+  const t=document.getElementById(tableId);
+  if(!t)return;
+  t.innerHTML=`<thead><tr>${cols.map(c=>`<th>${colLabels[c]}</th>`).join('')}</tr></thead>
+  <tbody>${data.map((r,i)=>{
+    const cls=highlightFn?highlightFn(r,i):'';
+    return`<tr class="${cls}">${cols.map(c=>`<td>${r[c]??'—'}</td>`).join('')}</tr>`;
+  }).join('')}</tbody>`;
+}
+function renderAllTables(){
+  renderTable('sel-db',db);
+  renderTable('rt-db',db);
+  renderTable('lp-db',db);
+  renderTable('ins-db',db);
+  renderTable('upd-db',db);
+  renderTable('del-db',db);
+  populateUpdSelect();
+}
+function showResult(id,type,msg=''){
+  const el=document.getElementById(id);
+  if(!el)return;
+  if(type==='hide'){el.style.display='none';return;}
+  el.style.display='';el.className=`result ${type}`;el.innerHTML=msg;
+  el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),600);
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ════════════════════ NAVIGATION ════════════════════
+const slides=document.querySelectorAll('.slide');
+const N=slides.length;
+document.getElementById('nt').textContent=N;
+let cur=0,loopTimer=null,loopRunning=false;
+
+const dotsEl=document.getElementById('dots');
+slides.forEach((_,i)=>{
+  const d=document.createElement('div');d.className='dot'+(i===0?' on':'');
+  d.onclick=()=>goTo(i);dotsEl.appendChild(d);
+});
+
+function goTo(n){
+  if(n<0||n>=N)return;
+  stopLoop();
+  slides[cur].classList.remove('active');slides[cur].classList.add('out');
+  const old=cur;cur=n;
+  setTimeout(()=>slides[old].classList.remove('out'),500);
+  slides[cur].classList.add('active');
+  document.getElementById('nc').textContent=cur+1;
+  document.getElementById('pb').style.width=((cur+1)/N*100)+'%';
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  document.getElementById('bp').disabled=cur===0;
+  document.getElementById('bn').disabled=cur===N-1;
+  // re-render on relevant slides
+  if(cur>=2)renderAllTables();
+  if(cur===7)populateUpdSelect();
+}
+document.getElementById('bp').onclick=()=>goTo(cur-1);
+document.getElementById('bn').onclick=()=>goTo(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')goTo(cur+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')goTo(cur-1);
+});
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)goTo(dx<0?cur+1:cur-1);},{passive:true});
+document.getElementById('bp').disabled=true;
+document.getElementById('pb').style.width=(1/N*100)+'%';
+
+// ════════════════════ SLIDE 3 — SELECT ════════════════════
+const SEL_CODE=[
+`<span class="cm">" Sélection complète — tous les enregistrements</span>
+<span class="kw">SELECT</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_orders</span>).
+<span class="kw">IF</span> <span class="vr">sy-subrc</span> <> <span class="nm">0</span>.
+  <span class="cm">" Aucun enregistrement trouvé</span>
+<span class="kw">ENDIF</span>.`,
+`<span class="cm">" Sélection d'UN SEUL enregistrement</span>
+<span class="kw">SELECT SINGLE</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO</span> @<span class="kw">DATA</span>(<span class="vr">ls_order</span>)
+  <span class="kw">WHERE</span> <span class="vr">vbeln</span> = @<span class="vr">lv_vbeln</span>.`,
+`<span class="cm">" Sélection avec condition WHERE</span>
+<span class="kw">SELECT</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_orders</span>)
+  <span class="kw">WHERE</span> <span class="vr">vkorg</span> = <span class="str">'1000'</span>
+    <span class="kw">AND</span> <span class="vr">netwr</span> > <span class="nm">5000</span>.`,
+`<span class="cm">" Limiter le nombre de résultats</span>
+<span class="kw">SELECT</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_orders</span>)
+  <span class="kw">UP TO</span> <span class="nm">5</span> <span class="kw">ROWS</span>.`,
+`<span class="cm">" Sélection de champs spécifiques</span>
+<span class="kw">SELECT</span> <span class="vr">vbeln</span> <span class="vr">kunnr</span> <span class="vr">netwr</span>
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_partial</span>)
+  <span class="kw">WHERE</span> <span class="vr">vkorg</span> = <span class="str">'1000'</span>.`
+];
+function showSel(i,el){
+  document.querySelectorAll('#sel-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('sel-code').innerHTML=`<pre class="code">${SEL_CODE[i]}</pre>`;
+}
+showSel(0,document.querySelector('#sel-tabs .tab'));
+
+function buildWhere(){
+  const f=document.getElementById('w-field').value;
+  const op=document.getElementById('w-op').value;
+  const v=document.getElementById('w-val').value;
+  document.getElementById('where-code').innerHTML=
+`<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_res</span>)
+  <span class="kw">WHERE</span> <span class="vr">${f}</span> ${op} <span class="str">${v}</span>.`;
+}
+buildWhere();
+
+function runSelect(){
+  renderTable('sel-db',db);
+  const type=document.getElementById('sel-type').value;
+  let matched=[],msg='';
+  setTimeout(()=>{
+    if(type==='all'){matched=db;msg=`✓ sy-subrc = 0 — ${db.length} enregistrement(s) sélectionné(s)`;}
+    else if(type==='single'){matched=[db[0]];msg=`✓ sy-subrc = 0 — SELECT SINGLE → 1 enregistrement`;}
+    else if(type==='where-vkorg'){matched=db.filter(r=>r.vkorg==='1000');msg=`✓ WHERE vkorg = '1000' → ${matched.length} ligne(s)`;}
+    else if(type==='where-auart'){matched=db.filter(r=>r.auart==='TA');msg=`✓ WHERE auart = 'TA' → ${matched.length} ligne(s)`;}
+    else if(type==='where-netwr'){matched=db.filter(r=>r.netwr>5000);msg=`✓ WHERE netwr > 5000 → ${matched.length} ligne(s)`;}
+    else if(type==='top3'){matched=db.slice(0,3);msg=`✓ UP TO 3 ROWS → 3 ligne(s) retournées`;}
+    else if(type==='like'){matched=db.filter(r=>r.kunnr.startsWith('C00'));msg=`✓ WHERE kunnr LIKE 'C00%' → ${matched.length} ligne(s)`;}
+    const matchSet=new Set(matched.map(r=>r.vbeln));
+    renderTable('sel-db',db,(r)=>matchSet.has(r.vbeln)?'sel':matched.length<db.length?'dim':'');
+    showResult('sel-result','ok',msg);
+  },120);
+}
+
+// ════════════════════ SLIDE 4 — SELECT ADVANCED ════════════════════
+const ADV_CODE=[
+`<span class="cm">" INNER JOIN — Commandes avec postes</span>
+<span class="kw">SELECT</span> a~<span class="vr">vbeln</span> a~<span class="vr">kunnr</span> b~<span class="vr">posnr</span>
+       b~<span class="vr">matnr</span> b~<span class="vr">kwmeng</span>
+  <span class="kw">FROM</span> <span class="tp">zvbak</span> <span class="kw">AS</span> a
+  <span class="kw">INNER JOIN</span> <span class="tp">zvbap</span> <span class="kw">AS</span> b
+    <span class="kw">ON</span> a~<span class="vr">vbeln</span> = b~<span class="vr">vbeln</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_res</span>).`,
+`<span class="cm">" LEFT JOIN — Toutes les commandes,</span>
+<span class="cm">" même sans postes</span>
+<span class="kw">SELECT</span> a~<span class="vr">vbeln</span> a~<span class="vr">kunnr</span>
+       b~<span class="vr">matnr</span> b~<span class="vr">kwmeng</span>
+  <span class="kw">FROM</span> <span class="tp">zvbak</span> <span class="kw">AS</span> a
+  <span class="kw">LEFT OUTER JOIN</span> <span class="tp">zvbap</span> <span class="kw">AS</span> b
+    <span class="kw">ON</span> a~<span class="vr">vbeln</span> = b~<span class="vr">vbeln</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_res</span>).`,
+`<span class="cm">" Agrégation par client</span>
+<span class="kw">SELECT</span> <span class="vr">kunnr</span>
+       <span class="fn">SUM</span>( <span class="vr">netwr</span> ) <span class="kw">AS</span> <span class="vr">total</span>
+       <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="vr">nb_cmds</span>
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_agg</span>)
+  <span class="kw">GROUP BY</span> <span class="vr">kunnr</span>
+  <span class="kw">HAVING</span> <span class="fn">SUM</span>( <span class="vr">netwr</span> ) > <span class="nm">5000</span>.`,
+`<span class="cm">" Tri des résultats</span>
+<span class="kw">SELECT</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_sorted</span>)
+  <span class="kw">ORDER BY</span> <span class="vr">netwr</span> <span class="kw">DESCENDING</span>
+           <span class="vr">kunnr</span> <span class="kw">ASCENDING</span>.`,
+`<span class="cm">" Sous-requête</span>
+<span class="kw">SELECT</span> *
+  <span class="kw">FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">INTO TABLE</span> @<span class="kw">DATA</span>(<span class="vr">lt_res</span>)
+  <span class="kw">WHERE</span> <span class="vr">vbeln</span> <span class="kw">IN</span> (
+    <span class="kw">SELECT</span> <span class="vr">vbeln</span>
+    <span class="kw">FROM</span> <span class="tp">zvbap</span>
+    <span class="kw">WHERE</span> <span class="vr">matnr</span> = <span class="str">'M001'</span> ).`
+];
+let advIdx=0;
+const JOIN_DESC=['Seules les commandes AYANT des postes sont retournées.','Toutes les commandes, avec postes si disponibles (NULL sinon).','Agrégation — résultat groupé par client avec SUM/COUNT.','Résultats triés sans jointure.','Sous-requête — filtre sur données liées.'];
+function showAdv(i,el){
+  advIdx=i;
+  document.querySelectorAll('#adv-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('adv-code').innerHTML=`<pre class="code">${ADV_CODE[i]}</pre>`;
+  const d=document.getElementById('join-diag');
+  d.style.display=(i<=1)?'flex':'none';
+  if(i<=1){document.getElementById('join-lbl').innerHTML=i===0?'INNER<br>JOIN':'LEFT<br>JOIN';
+    document.getElementById('join-desc').textContent=JOIN_DESC[i];}
+}
+showAdv(0,document.querySelector('#adv-tabs .tab'));
+
+function runAdv(){
+  let rows=[],heads=[],msg='';
+  if(advIdx===0){
+    heads=['VBELN','KUNNR','POSNR','MATNR','MAKTX','KWMENG'];
+    VBAP_DB.forEach(p=>{const h=db.find(r=>r.vbeln===p.vbeln);if(h)rows.push([h.vbeln,h.kunnr,p.posnr,p.matnr,p.maktx,p.kwmeng]);});
+    msg=`✓ INNER JOIN → ${rows.length} ligne(s)`;
+  } else if(advIdx===1){
+    heads=['VBELN','KUNNR','MATNR','KWMENG'];
+    db.forEach(h=>{const ps=VBAP_DB.filter(p=>p.vbeln===h.vbeln);
+      if(ps.length)ps.forEach(p=>rows.push([h.vbeln,h.kunnr,p.matnr,p.kwmeng]));
+      else rows.push([h.vbeln,h.kunnr,'NULL','NULL']);});
+    msg=`✓ LEFT JOIN → ${rows.length} ligne(s)`;
+  } else if(advIdx===2){
+    heads=['KUNNR','TOTAL NETWR','NB_CMDS'];
+    const agg={};db.forEach(r=>{if(!agg[r.kunnr])agg[r.kunnr]={t:0,n:0};agg[r.kunnr].t+=r.netwr;agg[r.kunnr].n++;});
+    rows=Object.entries(agg).filter(([,v])=>v.t>5000).map(([k,v])=>[k,v.t.toLocaleString(),v.n]);
+    msg=`✓ GROUP BY kunnr HAVING SUM > 5000 → ${rows.length} groupe(s)`;
+  } else if(advIdx===3){
+    heads=['VBELN','KUNNR','AUART','NETWR'];
+    rows=[...db].sort((a,b)=>b.netwr-a.netwr).map(r=>[r.vbeln,r.kunnr,r.auart,r.netwr.toLocaleString()]);
+    msg=`✓ ORDER BY netwr DESC → ${rows.length} ligne(s)`;
+  } else {
+    heads=['VBELN','KUNNR','AUART','NETWR'];
+    const m1vbeln=new Set(VBAP_DB.filter(p=>p.matnr==='M001').map(p=>p.vbeln));
+    rows=db.filter(r=>m1vbeln.has(r.vbeln)).map(r=>[r.vbeln,r.kunnr,r.auart,r.netwr.toLocaleString()]);
+    msg=`✓ Subquery matnr='M001' → ${rows.length} commande(s)`;
+  }
+  const w=document.getElementById('adv-result-wrap');
+  w.innerHTML=`<table class="dbtable"><thead><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r=>`<tr class="sel">${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  showResult('adv-result-bar','ok',msg);
+}
+function clearAdv(){document.getElementById('adv-result-wrap').innerHTML='<div style="color:var(--light);font-size:11px;font-family:\'Fira Code\',monospace;padding:8px 0;">← Cliquez Exécuter</div>';showResult('adv-result-bar','info','Prêt');}
+
+// ════════════════════ SLIDE 5 — READ TABLE ════════════════════
+const RT_CODE=[
+`<span class="cm">" Accès par index (position physique)</span>
+<span class="kw">READ TABLE</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO</span> <span class="kw">DATA</span>(<span class="vr">ls_order</span>)
+  <span class="kw">INDEX</span> <span class="nm">2</span>.
+<span class="kw">IF</span> <span class="vr">sy-subrc</span> = <span class="nm">0</span>.
+  <span class="cm">" ls_order contient la ligne 2</span>
+<span class="kw">ENDIF</span>.`,
+`<span class="cm">" Recherche par clé</span>
+<span class="kw">READ TABLE</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO</span> <span class="kw">DATA</span>(<span class="vr">ls_order</span>)
+  <span class="kw">WITH KEY</span>
+    <span class="vr">kunnr</span> = <span class="str">'C001'</span>
+    <span class="vr">auart</span> = <span class="str">'TA'</span>.`,
+`<span class="cm">" BINARY SEARCH (table doit être triée !)</span>
+<span class="kw">SORT</span> <span class="vr">lt_orders</span> <span class="kw">BY</span> <span class="vr">kunnr</span>.
+<span class="kw">READ TABLE</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO</span> <span class="kw">DATA</span>(<span class="vr">ls_order</span>)
+  <span class="kw">WITH KEY</span> <span class="vr">kunnr</span> = <span class="str">'C002'</span>
+  <span class="kw">BINARY SEARCH</span>. <span class="cm">" O(log n)</span>`,
+`<span class="cm">" ASSIGNING — Pointeur direct (pas de copie)</span>
+<span class="kw">READ TABLE</span> <span class="vr">lt_orders</span>
+  <span class="kw">ASSIGNING FIELD-SYMBOL</span>(&lt;<span class="vr">ls</span>&gt;)
+  <span class="kw">WITH KEY</span> <span class="vr">vbeln</span> = <span class="str">'0000000003'</span>.
+<span class="kw">IF</span> &lt;<span class="vr">ls</span>&gt; <span class="kw">IS ASSIGNED</span>.
+  &lt;<span class="vr">ls</span>&gt;-<span class="vr">netwr</span> = <span class="nm">9999</span>. <span class="cm">" Modifie itab!</span>
+<span class="kw">ENDIF</span>.`,
+`<span class="cm">" Style 7.40 — Expression de table</span>
+<span class="kw">DATA</span>(<span class="vr">ls</span>) = <span class="vr">lt_orders</span>[ <span class="vr">kunnr</span> = <span class="str">'C001'</span> ].
+
+<span class="cm">" Vérifier l'existence</span>
+<span class="kw">IF</span> <span class="fn">line_exists</span>( <span class="vr">lt_orders</span>[
+    <span class="vr">kunnr</span> = <span class="str">'C003'</span> ] ).
+  ...
+<span class="kw">ENDIF</span>.`
+];
+const RT_HINTS=[
+  '💡 <strong>INDEX</strong> accède directement par position O(1). Très rapide mais fragile si la table est triée/modifiée.',
+  '💡 <strong>WITH KEY</strong> fait une recherche linéaire O(n). Utiliser BINARY SEARCH si la table est grande et triée.',
+  '💡 <strong>BINARY SEARCH</strong> est O(log n) mais la table DOIT être triée par la même clé. Toujours SORT avant.',
+  '💡 <strong>ASSIGNING</strong> donne un field-symbol = pointeur sur la ligne. Toute modification du field-symbol modifie la table!',
+  '💡 <strong>Style 7.40</strong> — itab[key=val] lève une exception CX_SY_ITAB_LINE_NOT_FOUND si non trouvé. Utiliser line_exists() avant.'
+];
+function showRT(i,el){
+  document.querySelectorAll('#rt-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('rt-code').innerHTML=`<pre class="code">${RT_CODE[i]}</pre>`;
+  document.getElementById('rt-hint').innerHTML=RT_HINTS[i];
+}
+showRT(0,document.querySelector('#rt-tabs .tab'));
+function showRTSelect(){}
+
+function runRT(){
+  renderTable('rt-db',db);
+  const type=document.getElementById('rt-type').value;
+  setTimeout(()=>{
+    let matchVbeln=null,msg='';
+    if(type==='idx2'){matchVbeln=db[1]?.vbeln;msg=`✓ INDEX 2 → ${db[1]?.vbeln} / sy-subrc = 0`;}
+    else if(type==='idx4'){matchVbeln=db[3]?.vbeln;msg=`✓ INDEX 4 → ${db[3]?.vbeln} / sy-subrc = 0`;}
+    else if(type==='key-C001'){const r=db.find(x=>x.kunnr==='C001');matchVbeln=r?.vbeln;msg=r?`✓ kunnr='C001' → ${r.vbeln} / sy-subrc = 0`:'✗ sy-subrc = 4';}
+    else if(type==='key-C003'){const r=db.find(x=>x.kunnr==='C003');matchVbeln=r?.vbeln;msg=r?`✓ kunnr='C003' → ${r.vbeln} / sy-subrc = 0`:'✗ sy-subrc = 4';}
+    else if(type==='key-TA'){const r=db.find(x=>x.auart==='TA');matchVbeln=r?.vbeln;msg=r?`✓ auart='TA' → ${r.vbeln} / sy-subrc = 0`:'✗ sy-subrc = 4';}
+    else if(type==='nofield'){matchVbeln=null;msg=`TRANSPORTING NO FIELDS → sy-tabix = ${db.findIndex(x=>x.kunnr==='C001')+1} / sy-subrc = 0`;}
+    else if(type==='7style'){const r=db.find(x=>x.kunnr==='C002');matchVbeln=r?.vbeln;msg=r?`✓ itab[kunnr='C002'] → ${r.vbeln}`:'✗ CX_SY_ITAB_LINE_NOT_FOUND';}
+    renderTable('rt-db',db,(r)=>r.vbeln===matchVbeln?'sel':matchVbeln?'dim':'');
+    showResult('rt-result','ok',msg);
+  },100);
+}
+function resetRT(){renderTable('rt-db',db);showResult('rt-result','info','← Choisissez et cliquez READ');}
+
+// ════════════════════ SLIDE 6 — LOOP AT ════════════════════
+const LP_CODE=[
+`<span class="cm">" Boucle de base</span>
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO DATA</span>(<span class="vr">ls_order</span>).
+  <span class="cm">" sy-tabix = index courant</span>
+  <span class="fn">WRITE</span>: / <span class="vr">ls_order</span>-<span class="vr">vbeln</span>,
+               <span class="vr">ls_order</span>-<span class="vr">netwr</span>.
+<span class="kw">ENDLOOP</span>.`,
+`<span class="cm">" Avec filtre WHERE</span>
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO DATA</span>(<span class="vr">ls_order</span>)
+  <span class="kw">WHERE</span> <span class="vr">auart</span> = <span class="str">'TA'</span>
+    <span class="kw">AND</span> <span class="vr">netwr</span> > <span class="nm">5000</span>.
+  <span class="cm">" Traitement filtré</span>
+<span class="kw">ENDLOOP</span>.`,
+`<span class="cm">" ASSIGNING — Modification en place</span>
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">ASSIGNING FIELD-SYMBOL</span>(&lt;<span class="vr">ls</span>&gt;).
+  <span class="cm">" Modifie directement la table!</span>
+  &lt;<span class="vr">ls</span>&gt;-<span class="vr">netwr</span> =
+    &lt;<span class="vr">ls</span>&gt;-<span class="vr">netwr</span> * <span class="str">'1.2'</span>. <span class="cm">" +20%</span>
+<span class="kw">ENDLOOP</span>.`,
+`<span class="cm">" AT NEW — Détection de rupture</span>
+<span class="kw">SORT</span> <span class="vr">lt_orders</span> <span class="kw">BY</span> <span class="vr">kunnr</span>.
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO DATA</span>(<span class="vr">ls_order</span>).
+  <span class="kw">AT NEW</span> <span class="vr">kunnr</span>.
+    <span class="cm">" 1er enreg. du groupe</span>
+  <span class="kw">ENDAT</span>.
+  <span class="kw">AT END OF</span> <span class="vr">kunnr</span>.
+    <span class="cm">" Dernier enreg. du groupe</span>
+  <span class="kw">ENDAT</span>.
+<span class="kw">ENDLOOP</span>.`,
+`<span class="cm">" GROUP BY — Syntaxe 7.54+</span>
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO DATA</span>(<span class="vr">ls_order</span>)
+  <span class="kw">GROUP BY</span> ( <span class="vr">kunnr</span> =
+               <span class="vr">ls_order</span>-<span class="vr">kunnr</span> )
+  <span class="kw">ASSIGNING FIELD-SYMBOL</span>(&lt;<span class="vr">grp</span>&gt;).
+  <span class="kw">LOOP AT GROUP</span> &lt;<span class="vr">grp</span>&gt;
+    <span class="kw">INTO DATA</span>(<span class="vr">ls_m</span>).
+    <span class="cm">" Itération du sous-groupe</span>
+  <span class="kw">ENDLOOP</span>.
+<span class="kw">ENDLOOP</span>.`
+];
+const LP_HINTS=[
+  '💡 <strong>sy-tabix</strong> contient l\'index courant. <strong>sy-subrc = 0</strong> si au moins une itération. EXIT sort immédiatement de la boucle.',
+  '💡 Le filtre WHERE dans LOOP est évalué pour chaque ligne. Préférer des tables triées avec BINARY SEARCH pour les grands volumes.',
+  '💡 <strong>ASSIGNING</strong> = référence directe. Pas de copie en mémoire. Modification de &lt;fs&gt; = modification de la table. CHECK/EXIT fonctionnent.',
+  '💡 <strong>AT NEW / AT END OF</strong> nécessitent que la table soit triée par le champ de rupture. Utilisé pour les sous-totaux.',
+  '💡 <strong>GROUP BY</strong> (ABAP 7.54+) remplace le pattern SORT + AT NEW. Plus lisible et expressif.'
+];
+function showLP(i,el){
+  document.querySelectorAll('#lp-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('lp-code').innerHTML=`<pre class="code">${LP_CODE[i]}</pre>`;
+  document.getElementById('lp-hint').innerHTML=LP_HINTS[i];
+}
+showLP(0,document.querySelector('#lp-tabs .tab'));
+
+async function runLoop(){
+  stopLoop();loopRunning=true;
+  const type=document.getElementById('lp-type').value;
+  const speed=parseInt(document.getElementById('lp-speed').value);
+  let filter=null;
+  if(type==='where-TA')filter=r=>r.auart==='TA';
+  else if(type==='where-C001')filter=r=>r.kunnr==='C001';
+  else if(type==='where-big')filter=r=>r.netwr>5000;
+  const ptr=document.getElementById('lp-ptr');
+  ptr.style.display='';
+  let tabix=0,processed=0;
+  renderTable('lp-db',db);
+  for(let i=0;i<db.length;i++){
+    if(!loopRunning)break;
+    tabix++;
+    const match=!filter||filter(db[i]);
+    if(match)processed++;
+    renderTable('lp-db',db,(r,idx)=>idx===i?'loop-cur':idx<i?(filter&&!filter(db[idx]))? 'dim':'sel':'');
+    ptr.innerHTML=`sy-tabix: ${tabix}`;
+    document.getElementById('lp-result').innerHTML=`Itération ${tabix}/${db.length} — Traités: ${processed}`;
+    await sleep(speed);
+  }
+  if(loopRunning){
+    ptr.innerHTML=`ENDLOOP`;
+    document.getElementById('lp-result').innerHTML=`✓ LOOP terminé — ${processed} ligne(s) traitée(s) / sy-subrc = 0`;
+  }
+  loopRunning=false;
+}
+function stopLoop(){loopRunning=false;renderTable('lp-db',db);document.getElementById('lp-ptr').style.display='none';document.getElementById('lp-result').innerHTML='Prêt — choisissez une variante';}
+
+// ════════════════════ SLIDE 7 — INSERT ════════════════════
+const INS_CODE=[
+`<span class="cm">" INSERT vers la base de données</span>
+<span class="kw">DATA</span>(<span class="vr">ls_new</span>) = <span class="kw">VALUE</span> <span class="tp">zvbak</span>(
+  <span class="vr">vbeln</span> = <span class="str">'0000000010'</span>
+  <span class="vr">kunnr</span> = <span class="str">'C005'</span>
+  <span class="vr">auart</span> = <span class="str">'TA'</span>
+  <span class="vr">netwr</span> = <span class="nm">4500</span> ).
+<span class="kw">INSERT INTO</span> <span class="tp">zvbak</span>
+  <span class="kw">VALUES</span> <span class="vr">ls_new</span>.
+<span class="kw">IF</span> <span class="vr">sy-subrc</span> <> <span class="nm">0</span>. <span class="cm">" Doublon!</span>`,
+`<span class="cm">" INSERT dans table interne</span>
+<span class="kw">INSERT</span> <span class="vr">ls_new</span>
+  <span class="kw">INTO</span> <span class="vr">lt_orders</span>
+  <span class="kw">INDEX</span> <span class="nm">1</span>. <span class="cm">" Insère en 1ère pos.</span>
+
+<span class="cm">" Sans index = en fin de table</span>
+<span class="kw">INSERT</span> <span class="vr">ls_new</span>
+  <span class="kw">INTO TABLE</span> <span class="vr">lt_orders</span>.`,
+`<span class="cm">" APPEND — Ajouter en fin de table</span>
+<span class="kw">APPEND</span> <span class="vr">ls_new</span>
+  <span class="kw">TO</span> <span class="vr">lt_orders</span>.
+
+<span class="cm">" Avec VALUE (7.40)</span>
+<span class="kw">APPEND VALUE</span> #(
+  <span class="vr">vbeln</span> = <span class="str">'0000000011'</span>
+  <span class="vr">kunnr</span> = <span class="str">'C006'</span>
+  <span class="vr">netwr</span> = <span class="nm">2200</span>
+) <span class="kw">TO</span> <span class="vr">lt_orders</span>.`,
+`<span class="cm">" INSERT de plusieurs lignes d'un coup</span>
+<span class="kw">DATA</span>(<span class="vr">lt_new</span>) = <span class="kw">VALUE</span> <span class="tp">ty_orders</span>(
+  ( <span class="vr">vbeln</span>=<span class="str">'0000000020'</span> <span class="vr">kunnr</span>=<span class="str">'C007'</span> )
+  ( <span class="vr">vbeln</span>=<span class="str">'0000000021'</span> <span class="vr">kunnr</span>=<span class="str">'C008'</span> ) ).
+<span class="kw">INSERT LINES OF</span> <span class="vr">lt_new</span>
+  <span class="kw">INTO TABLE</span> <span class="vr">lt_orders</span>.`
+];
+function showIns(i,el){
+  document.querySelectorAll('#ins-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('ins-code').innerHTML=`<pre class="code">${INS_CODE[i]}</pre>`;
+}
+showIns(0,document.querySelector('#ins-tabs .tab'));
+
+function runInsert(){
+  const vbeln=document.getElementById('ins-vbeln').value||('000000000'+(db.length+1)).slice(-10);
+  const kunnr=document.getElementById('ins-kunnr').value||'C005';
+  const auart=document.getElementById('ins-auart').value;
+  const netwr=parseInt(document.getElementById('ins-netwr').value)||2000;
+  const vkorg=document.getElementById('ins-vkorg').value;
+  if(db.find(r=>r.vbeln===vbeln)){showResult('ins-result','err',`✗ sy-subrc = 4 — Doublon clé primaire : ${vbeln}`);return;}
+  const nr={vbeln,kunnr,auart,vkorg,netwr,erdat:new Date().toISOString().slice(0,10).replace(/-/g,'')};
+  db.push(nr);
+  renderTable('ins-db',db,(r)=>r.vbeln===vbeln?'ins':'');
+  renderTable('upd-db',db);renderTable('del-db',db);renderTable('sel-db',db);populateUpdSelect();
+  showResult('ins-result','ok',`✓ INSERT/APPEND — ${vbeln} inséré / sy-subrc = 0`);
+}
+function clearInsForm(){document.getElementById('ins-vbeln').value='';document.getElementById('ins-kunnr').value='C005';document.getElementById('ins-netwr').value='';}
+
+// ════════════════════ SLIDE 8 — UPDATE ════════════════════
+const UPD_CODE=[
+`<span class="cm">" UPDATE avec SET — Champs spécifiques</span>
+<span class="kw">UPDATE</span> <span class="tp">zvbak</span>
+  <span class="kw">SET</span> <span class="vr">netwr</span> = <span class="nm">9999</span>
+  <span class="kw">WHERE</span> <span class="vr">vbeln</span> =
+    <span class="str">'0000000001'</span>.`,
+`<span class="cm">" UPDATE FROM structure</span>
+<span class="vr">ls_order</span>-<span class="vr">netwr</span> = <span class="nm">7500</span>.
+<span class="kw">UPDATE</span> <span class="tp">zvbak</span>
+  <span class="kw">FROM</span> <span class="vr">ls_order</span>.
+<span class="cm">" Met à jour la ligne complète</span>`,
+`<span class="cm">" MODIFY DB — INSERT ou UPDATE</span>
+<span class="kw">MODIFY</span> <span class="tp">zvbak</span>
+  <span class="kw">FROM</span> <span class="vr">ls_order</span>.
+<span class="cm">" Insère si inexistant,</span>
+<span class="cm">" met à jour si trouvé (upsert)</span>`,
+`<span class="cm">" MODIFY table interne</span>
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">ASSIGNING FIELD-SYMBOL</span>(&lt;<span class="vr">ls</span>&gt;).
+  <span class="cm">" Modification directe !</span>
+  &lt;<span class="vr">ls</span>&gt;-<span class="vr">netwr</span> *= <span class="str">'1.1'</span>.
+<span class="kw">ENDLOOP</span>.
+<span class="cm">" Ou avec MODIFY + INDEX :</span>
+<span class="kw">MODIFY</span> <span class="vr">lt_orders</span>
+  <span class="kw">FROM</span> <span class="vr">ls_order</span>
+  <span class="kw">INDEX</span> <span class="vr">sy-tabix</span>.`
+];
+function showUpd(i,el){
+  document.querySelectorAll('#upd-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('upd-code').innerHTML=`<pre class="code">${UPD_CODE[i]}</pre>`;
+}
+showUpd(0,document.querySelector('#upd-tabs .tab'));
+function populateUpdSelect(){
+  const sel=document.getElementById('upd-vbeln');if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML=db.map(r=>`<option value="${r.vbeln}">${r.vbeln} | ${r.kunnr}</option>`).join('');
+  if(prev&&db.find(r=>r.vbeln===prev))sel.value=prev;
+  showUpdFields();
+}
+function showUpdFields(){
+  const vbeln=document.getElementById('upd-vbeln')?.value;
+  const field=document.getElementById('upd-field')?.value;
+  const val=document.getElementById('upd-val')?.value;
+  if(!vbeln||!field)return;
+  document.getElementById('upd-preview').innerHTML=
+    `<span class="kw">UPDATE</span> <span class="tp">zvbak</span>\n  <span class="kw">SET</span> <span class="vr">${field}</span> = <span class="str">'${val}'</span>\n  <span class="kw">WHERE</span> <span class="vr">vbeln</span> = <span class="str">'${vbeln}'</span>.`;
+}
+function runUpdate(){
+  const vbeln=document.getElementById('upd-vbeln').value;
+  const field=document.getElementById('upd-field').value;
+  const val=document.getElementById('upd-val').value;
+  const row=db.find(r=>r.vbeln===vbeln);
+  if(!row){showResult('upd-result','err','✗ Ligne non trouvée / sy-subrc = 4');return;}
+  const old=row[field];
+  row[field]=isNaN(val)?val:parseFloat(val);
+  renderTable('upd-db',db,(r)=>r.vbeln===vbeln?'upd':'');
+  renderTable('sel-db',db);renderTable('del-db',db);
+  showResult('upd-result','warn',`✓ UPDATE ${vbeln} — ${field.toUpperCase()}: ${old} → ${row[field]} / sy-subrc = 0`);
+}
+
+// ════════════════════ SLIDE 9 — DELETE ════════════════════
+const DEL_CODE=[
+`<span class="cm">" DELETE avec WHERE</span>
+<span class="kw">DELETE FROM</span> <span class="tp">zvbak</span>
+  <span class="kw">WHERE</span> <span class="vr">auart</span> = <span class="str">'RE'</span>.
+<span class="cm">" sy-dbcnt = nb lignes supprimées</span>`,
+`<span class="cm">" DELETE d'une table interne par structure</span>
+<span class="kw">DELETE</span> <span class="vr">lt_orders</span>
+  <span class="kw">FROM</span> <span class="vr">ls_order</span>. <span class="cm">" par clé</span>
+
+<span class="cm">" DELETE avec WHERE</span>
+<span class="kw">DELETE</span> <span class="vr">lt_orders</span>
+  <span class="kw">WHERE</span> <span class="vr">netwr</span> < <span class="nm">2000</span>.`,
+`<span class="cm">" DELETE par index de table interne</span>
+<span class="kw">DELETE</span> <span class="vr">lt_orders</span>
+  <span class="kw">INDEX</span> <span class="nm">3</span>.`,
+`<span class="cm">" Supprimer les doublons consécutifs</span>
+<span class="kw">SORT</span> <span class="vr">lt_orders</span> <span class="kw">BY</span> <span class="vr">kunnr</span>.
+<span class="kw">DELETE ADJACENT DUPLICATES</span>
+  <span class="kw">FROM</span> <span class="vr">lt_orders</span>
+  <span class="kw">COMPARING</span> <span class="vr">kunnr</span>.`,
+`<span class="cm">" Vider complètement une table</span>
+<span class="kw">REFRESH</span> <span class="vr">lt_orders</span>. <span class="cm">" ou CLEAR</span>
+
+<span class="cm">" Libérer la mémoire</span>
+<span class="kw">FREE</span> <span class="vr">lt_orders</span>.`
+];
+function showDel(i,el){
+  document.querySelectorAll('#del-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('del-code').innerHTML=`<pre class="code">${DEL_CODE[i]}</pre>`;
+}
+showDel(0,document.querySelector('#del-tabs .tab'));
+
+async function runDelete(){
+  const type=document.getElementById('del-type').value;
+  let toDelete=[];
+  if(type==='where-auart-RE')toDelete=db.filter(r=>r.auart==='RE').map(r=>r.vbeln);
+  else if(type==='where-vkorg-2000')toDelete=db.filter(r=>r.vkorg==='2000').map(r=>r.vbeln);
+  else if(type==='where-netwr-low')toDelete=db.filter(r=>r.netwr<2000).map(r=>r.vbeln);
+  else if(type==='idx3')toDelete=db[2]?[db[2].vbeln]:[];
+  else if(type==='adj'){
+    const sorted=[...db].sort((a,b)=>a.kunnr.localeCompare(b.kunnr));
+    const seen=new Set(),dups=[];
+    sorted.forEach(r=>{if(seen.has(r.kunnr))dups.push(r.vbeln);else seen.add(r.kunnr);});
+    toDelete=dups;
+  } else if(type==='refresh'){toDelete=db.map(r=>r.vbeln);}
+  if(toDelete.length===0){showResult('del-result','warn','Aucune ligne ne correspond au critère / sy-subrc = 4');document.getElementById('del-result').style.display='';return;}
+  const delSet=new Set(toDelete);
+  renderTable('del-db',db,(r)=>delSet.has(r.vbeln)?'del':'');
+  await sleep(600);
+  db=db.filter(r=>!delSet.has(r.vbeln));
+  renderTable('del-db',db);
+  renderTable('sel-db',db);renderTable('upd-db',db);renderTable('ins-db',db);
+  populateUpdSelect();
+  const el=document.getElementById('del-result');el.style.display='';
+  showResult('del-result','err',`✓ DELETE — ${toDelete.length} ligne(s) supprimée(s) / sy-dbcnt = ${toDelete.length}`);
+}
+
+// ════════════════════ SLIDE 10 — SORT / COLLECT / DESCRIBE ════════════════════
+const SORT_CODE=[
+`<span class="kw">SORT</span> <span class="vr">lt_orders</span>
+  <span class="kw">BY</span> <span class="vr">netwr</span>
+  <span class="kw">ASCENDING</span>.`,
+`<span class="kw">SORT</span> <span class="vr">lt_orders</span>
+  <span class="kw">BY</span> <span class="vr">netwr</span>
+  <span class="kw">DESCENDING</span>.`,
+`<span class="kw">SORT</span> <span class="vr">lt_orders</span>
+  <span class="kw">BY</span> <span class="vr">kunnr</span>
+     <span class="vr">auart</span>
+     <span class="vr">netwr</span> <span class="kw">DESCENDING</span>.`,
+`<span class="kw">SORT</span> <span class="vr">lt_orders</span>
+  <span class="kw">BY</span> <span class="vr">kunnr</span>
+  <span class="kw">STABLE</span>.
+<span class="cm">" Préserve l'ordre rel.</span>`
+];
+function showSort(i,el){document.querySelectorAll('#sort-tabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById('sort-code').innerHTML=`<pre class="code">${SORT_CODE[i]}</pre>`;}
+showSort(0,document.querySelector('#sort-tabs .tab'));
+
+function renderSortViz(data,field){
+  const vals=data.map(r=>typeof r[field]==='number'?r[field]:r[field].charCodeAt(0));
+  const mx=Math.max(...vals)||1;
+  const colors=['#3B82F6','#60A5FA','#93C5FD','#BFDBFE','#DBEAFE','#EFF6FF','#F0F9FF','#E0F2FE'];
+  document.getElementById('sort-viz').innerHTML=vals.map((v,i)=>{
+    const h=Math.max(8,Math.round(v/mx*56));
+    return`<div class="sort-b" style="height:${h}px;background:${colors[i%colors.length]};min-width:0;">${data[i][field]}</div>`;
+  }).join('');
+}
+function runSort(dir){
+  const field=document.getElementById('sort-field').value;
+  if(dir==='asc')db.sort((a,b)=>typeof a[field]==='number'?a[field]-b[field]:a[field].localeCompare(b[field]));
+  else db.sort((a,b)=>typeof a[field]==='number'?b[field]-a[field]:b[field].localeCompare(a[field]));
+  renderTable('lp-db',db);renderTable('rt-db',db);renderTable('sel-db',db);
+  renderSortViz(db,field);
+  showResult('sort-result','ok',`✓ SORT BY ${field} ${dir.toUpperCase()} — ${db.length} lignes triées`);
+}
+
+const COL_CODE=[
+`<span class="cm">" COLLECT — Agrège les numériques</span>
+<span class="cm">" par les champs non-numériques</span>
+<span class="kw">LOOP AT</span> <span class="vr">lt_orders</span>
+  <span class="kw">INTO DATA</span>(<span class="vr">ls_o</span>).
+  <span class="kw">COLLECT</span> <span class="vr">ls_o</span>
+    <span class="kw">INTO</span> <span class="vr">lt_collect</span>.
+<span class="kw">ENDLOOP</span>.`,
+`<span class="cm">" Équivalent 7.40 avec REDUCE</span>
+<span class="kw">DATA</span>(<span class="vr">lt_agg</span>) = <span class="kw">REDUCE</span> #(
+  <span class="kw">INIT</span> <span class="vr">t</span> = <span class="kw">VALUE</span> <span class="tp">ty_agg</span>( )
+  <span class="kw">FOR</span> <span class="vr">r</span> <span class="kw">IN</span> <span class="vr">lt_orders</span>
+  <span class="kw">NEXT</span> ... ).`,
+`<span class="cm">" COLLECT = GROUP BY + SUM</span>
+<span class="cm">" Usage : totaux par client,</span>
+<span class="cm">"         agrégation de quantités,</span>
+<span class="cm">"         statistiques par période</span>`
+];
+function showCol(i,el){document.querySelectorAll('#col-tabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById('col-code').innerHTML=`<pre class="code">${COL_CODE[i]}</pre>`;}
+showCol(0,document.querySelector('#col-tabs .tab'));
+
+function runCollect(){
+  const agg={};
+  db.forEach(r=>{if(!agg[r.kunnr])agg[r.kunnr]={kunnr:r.kunnr,netwr:0,cnt:0};agg[r.kunnr].netwr+=r.netwr;agg[r.kunnr].cnt++;});
+  const rows=Object.values(agg).sort((a,b)=>b.netwr-a.netwr);
+  document.getElementById('col-result-wrap').innerHTML=
+    `<table class="dbtable"><thead><tr><th>KUNNR</th><th>NETWR (SUM)</th><th>LIGNES</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr class="sel"><td>${r.kunnr}</td><td>${r.netwr.toLocaleString()}</td><td>${r.cnt}</td></tr>`).join('')}</tbody></table>`;
+}
+
+const DESC_CODE=[
+`<span class="cm">" Obtenir le nombre de lignes</span>
+<span class="kw">DESCRIBE TABLE</span> <span class="vr">lt_orders</span>
+  <span class="kw">LINES</span> <span class="vr">lv_lines</span>.
+<span class="cm">" 7.40 équivalent :</span>
+<span class="kw">DATA</span>(<span class="vr">lv_n</span>) =
+  <span class="fn">lines</span>( <span class="vr">lt_orders</span> ).`,
+`<span class="cm">" Vider une table interne</span>
+<span class="kw">CLEAR</span> <span class="vr">lt_orders</span>.
+<span class="kw">REFRESH</span> <span class="vr">lt_orders</span>. <span class="cm">" idem</span>
+<span class="cm">" Libérer la mémoire</span>
+<span class="kw">FREE</span> <span class="vr">lt_orders</span>.`,
+`<span class="cm">" lines() — Syntaxe 7.40</span>
+<span class="kw">DATA</span>(<span class="vr">n</span>) = <span class="fn">lines</span>( <span class="vr">lt_orders</span> ).
+<span class="kw">DATA</span>(<span class="vr">idx</span>) = <span class="fn">line_index</span>(
+  <span class="vr">lt_orders</span>[ <span class="vr">kunnr</span>=<span class="str">'C001'</span>] ).`,
+`<span class="cm">" Copier des lignes entre tables</span>
+<span class="kw">APPEND LINES OF</span> <span class="vr">lt_src</span>
+  <span class="kw">TO</span> <span class="vr">lt_dest</span>.
+<span class="kw">INSERT LINES OF</span> <span class="vr">lt_src</span>
+  <span class="kw">INTO</span> <span class="vr">lt_dest</span>
+  <span class="kw">INDEX</span> <span class="nm">1</span>.`
+];
+function showDesc(i,el){document.querySelectorAll('#desc-tabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById('desc-code').innerHTML=`<pre class="code">${DESC_CODE[i]}</pre>`;}
+showDesc(0,document.querySelector('#desc-tabs .tab'));
+
+function runDescribe(){
+  const n=db.length;
+  const total=db.reduce((s,r)=>s+r.netwr,0);
+  const avg=n?Math.round(total/n):0;
+  const max=db.reduce((m,r)=>Math.max(m,r.netwr),0);
+  const min=db.reduce((m,r)=>Math.min(m,r.netwr),Infinity);
+  const byKunnr={};db.forEach(r=>byKunnr[r.kunnr]=(byKunnr[r.kunnr]||0)+1);
+  document.getElementById('desc-result-wrap').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      ${[['LINES','lines( lt_orders )',n],['TOTAL','SUM( netwr )',total.toLocaleString()],
+         ['AVERAGE','AVG( netwr )',avg.toLocaleString()],['MAX','MAX( netwr )',max.toLocaleString()],
+         ['MIN','MIN( netwr )',min.toLocaleString()],['CLIENTS','COUNT DISTINCT',Object.keys(byKunnr).length]
+        ].map(([l,c,v])=>`
+        <div style="padding:8px;background:var(--a100);border:1px solid #FCD34D;border-radius:8px;text-align:center;">
+          <div style="font-family:'Fira Code',monospace;font-size:8px;color:var(--a700);font-weight:700;">${c}</div>
+          <div style="font-size:18px;font-weight:800;color:var(--a700);margin:2px 0;">${v}</div>
+          <div style="font-size:9px;color:var(--muted);">${l}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ════════ INIT ════════
+renderAllTables();
+buildWhere();
+showAdv(0,document.querySelector('#adv-tabs .tab'));
+renderSortViz(db,'netwr');
+</script>
+</body>
+</html>
