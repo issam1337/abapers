@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABAP Live Simulator · Viseo University</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Outfit',sans-serif;background:#0B1020;color:#CDD9E5;display:flex;flex-direction:column;user-select:none}
+
+/* ── TOPBAR ── */
+#topbar{height:50px;background:#060C18;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;z-index:100}
+.tb-logo{display:flex;align-items:center;gap:8px}
+.tb-dot{width:8px;height:8px;border-radius:50%;background:#3B82F6;box-shadow:0 0 10px #3B82F6;animation:pulse 2.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tb-title{font-size:13px;font-weight:700;color:#E2E8F0;letter-spacing:.01em}
+.tb-title span{color:#60A5FA}
+.tb-sep{width:1px;height:22px;background:rgba(255,255,255,.1);margin:0 4px}
+.tb-snippets{display:flex;gap:5px;flex:1}
+.snip-btn{padding:4px 10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#94A3B8;border-radius:5px;font-family:'Fira Code',monospace;font-size:10px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.snip-btn:hover{border-color:#3B82F6;color:#60A5FA;background:rgba(59,130,246,.08)}
+.tb-r{display:flex;align-items:center;gap:8px;margin-left:auto}
+.run-btn{padding:6px 16px;background:#3B82F6;color:#fff;border:none;border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.run-btn:hover{background:#2563EB;transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,130,246,.4)}
+.run-btn:active{transform:translateY(0)}
+.run-btn.loading{background:#1D4ED8;cursor:wait}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#94A3B8}
+.status-dot.ok{background:#22C55E;box-shadow:0 0 8px #22C55E}
+.status-dot.thinking{background:#F59E0B;animation:pulse 1s infinite}
+.status-dot.err{background:#EF4444}
+
+/* ── MAIN SPLIT ── */
+#main{display:flex;flex:1;min-height:0;overflow:hidden}
+
+/* ── EDITOR PANEL ── */
+#ep{width:42%;min-width:300px;background:#0D1421;border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;position:relative;min-height:0}
+#ep-header{padding:8px 16px;background:#060C18;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px;font-size:10px;color:#64748B;font-family:'Fira Code',monospace;flex-shrink:0}
+.ep-tab{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.2);color:#93C5FD;font-size:10px}
+.ep-tab-dot{width:5px;height:5px;border-radius:50%;background:#3B82F6}
+#editor-wrap{flex:1;display:flex;min-height:0;position:relative;overflow:hidden}
+#line-nums{width:42px;background:#0A1020;border-right:1px solid rgba(255,255,255,.05);padding:14px 0;text-align:right;font-family:'Fira Code',monospace;font-size:12px;line-height:1.75;color:#2D3748;flex-shrink:0;overflow:hidden;user-select:none}
+.ln{padding-right:10px;min-height:21px;display:block}
+.ln.active-ln{color:#60A5FA}
+#hl-layer{position:absolute;left:42px;right:0;top:0;padding:14px 16px;font-family:'Fira Code',monospace;font-size:12px;line-height:1.75;white-space:pre;pointer-events:none;z-index:1;overflow:hidden;word-break:break-all}
+#code-input{position:absolute;left:42px;right:0;top:0;bottom:0;padding:14px 16px;font-family:'Fira Code',monospace;font-size:12px;line-height:1.75;background:transparent;border:none;outline:none;resize:none;color:transparent;caret-color:#60A5FA;z-index:2;overflow-y:auto;overflow-x:auto;white-space:pre;word-break:break-all;tab-size:2}
+#code-input::selection{background:rgba(59,130,246,.25)}
+#code-input::-webkit-scrollbar{width:5px;height:5px}
+#code-input::-webkit-scrollbar-track{background:transparent}
+#code-input::-webkit-scrollbar-thumb{background:#1E293B;border-radius:3px}
+#ep-footer{padding:6px 14px;background:#060C18;border-top:1px solid rgba(255,255,255,.07);font-size:9px;color:#475569;font-family:'Fira Code',monospace;display:flex;gap:14px;flex-shrink:0}
+
+/* ── SYNTAX HIGHLIGHT COLORS ── */
+.kw{color:#60A5FA;font-weight:500}
+.kw2{color:#A78BFA;font-weight:500}
+.st{color:#86EFAC}
+.cm{color:#4B5563;font-style:italic}
+.nm{color:#FCA5A5}
+.tp{color:#FCD34D}
+.vr{color:#C4B5FD}
+.fn{color:#67E8F9}
+.fs{color:#F9A8D4}
+.at{color:#FCD34D;font-weight:600}
+.op{color:#94A3B8}
+
+/* ── VIZ PANEL ── */
+#vp{flex:1;background:#EEF4FF;display:flex;flex-direction:column;min-width:0;overflow-y:auto;overflow-x:hidden}
+#vp-header{padding:9px 18px;background:#fff;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06);position:sticky;top:0;z-index:10}
+.vp-title{font-size:13px;font-weight:700;color:#0F172A}
+.vp-title span{color:#3B82F6}
+#vp-steps-count{font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;background:#DBEAFE;color:#1D4ED8;font-family:'Fira Code',monospace}
+#vp-db-info{margin-left:auto;font-size:10px;color:#64748B;display:flex;align-items:center;gap:8px}
+.db-chip{padding:2px 8px;border:1px solid #E2E8F0;border-radius:4px;font-family:'Fira Code',monospace;font-size:9px;color:#475569;cursor:pointer;transition:all .2s}
+.db-chip:hover{border-color:#93C5FD;color:#1D4ED8}
+#vp-content{padding:16px;display:flex;flex-direction:column;gap:14px}
+#vp::-webkit-scrollbar{width:6px}
+#vp::-webkit-scrollbar-track{background:#E2E8F0;border-radius:3px}
+#vp::-webkit-scrollbar-thumb{background:#93C5FD;border-radius:3px}
+#vp::-webkit-scrollbar-thumb:hover{background:#3B82F6}
+/* Cards grow with content, never clip */
+
+
+/* ── EMPTY STATE ── */
+#empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#94A3B8;text-align:center}
+#empty-state .es-icon{font-size:48px;opacity:.4}
+#empty-state h3{font-size:16px;font-weight:600;color:#64748B}
+#empty-state p{font-size:13px;max-width:260px;line-height:1.6}
+.es-hints{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.es-hint{font-family:'Fira Code',monospace;font-size:11px;padding:6px 12px;background:#fff;border:1px solid #E2E8F0;border-radius:7px;color:#475569}
+
+/* ── THINKING STATE ── */
+#thinking-state{display:none;flex-direction:column;gap:12px;padding:8px 0}
+.think-skel{height:180px;background:linear-gradient(90deg,#fff,#F1F5FF,#fff);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:12px;border:1px solid #E2E8F0}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.think-label{text-align:center;font-size:12px;color:#64748B;display:flex;align-items:center;justify-content:center;gap:7px}
+.think-spinner{width:14px;height:14px;border:2px solid #BFDBFE;border-top-color:#3B82F6;border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── STEP CARD ── */
+.step-card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 12px rgba(37,99,235,.06);animation:cardIn .4s ease forwards;opacity:0;transform:translateY(10px)}
+@keyframes cardIn{to{opacity:1;transform:translateY(0)}}
+.sc-head{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid #F1F5F9}
+.sc-step-num{font-family:'Fira Code',monospace;font-size:9px;font-weight:700;color:#94A3B8}
+.sc-badge{padding:3px 9px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.badge-select{background:#DBEAFE;color:#1D4ED8}
+.badge-loop{background:#EDE9FE;color:#6D28D9}
+.badge-read{background:#CFFAFE;color:#0E7490}
+.badge-insert,.badge-append{background:#D1FAE5;color:#065F46}
+.badge-modify,.badge-update{background:#FEF3C7;color:#92400E}
+.badge-delete{background:#FEE2E2;color:#991B1B}
+.badge-if,.badge-case{background:#FEF9C3;color:#854D0E}
+.badge-sort{background:#F3E8FF;color:#7E22CE}
+.badge-write{background:#F1F5F9;color:#475569}
+.sc-table-name{font-family:'Fira Code',monospace;font-size:10px;font-weight:600;color:#0F172A}
+.sc-itab-name{font-family:'Fira Code',monospace;font-size:10px;color:#7C3AED}
+.sc-arrow{color:#CBD5E1;font-size:11px}
+.sc-desc{margin-left:auto;font-size:10px;color:#64748B;max-width:200px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-snippet{padding:8px 14px;background:#F8FAFF;border-bottom:1px solid #F1F5F9;font-family:'Fira Code',monospace;font-size:10px;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:72px;overflow:hidden;cursor:pointer;transition:max-height .3s ease}
+.sc-snippet.expanded{max-height:400px;overflow-y:auto}
+.sc-snippet:hover{background:#EFF6FF}
+.sc-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+table.dt{width:100%;border-collapse:collapse;font-family:'Fira Code',monospace;font-size:10px;table-layout:fixed}
+table.dt th{padding:4px 8px;background:#1E3A5F;color:#93C5FD;text-align:left;font-weight:600;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table.dt td{padding:4px 8px;border-bottom:1px solid #E2E8F0;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .3s}
+
+/* ── DATA TABLES ── */
+.data-section{display:flex;flex-direction:column;gap:5px}
+.ds-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;display:flex;align-items:center;gap:6px}
+.ds-count{padding:1px 6px;border-radius:3px;font-weight:700;font-size:9px}
+.count-blue{background:#DBEAFE;color:#1D4ED8}
+.count-green{background:#D1FAE5;color:#065F46}
+.count-amber{background:#FEF3C7;color:#92400E}
+.count-red{background:#FEE2E2;color:#991B1B}
+.count-purple{background:#EDE9FE;color:#6D28D9}
+.dt-wrap{border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;background:#F8FAFF}
+.dt-bar{padding:4px 10px;background:#EFF6FF;border-bottom:1px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;font-size:9px;font-weight:700;color:#1D4ED8;font-family:'Fira Code',monospace}
+table.dt{width:100%;border-collapse:collapse;font-family:'Fira Code',monospace;font-size:10px}
+table.dt tbody tr{cursor:default;transition:all .3s}
+table.dt tbody tr:last-child td{border-bottom:none}
+table.dt tbody tr:hover td{background:#EFF6FF}
+table.dt tbody tr.row-hl{background:rgba(59,130,246,.1)!important}
+table.dt tbody tr.row-hl td{color:#1D4ED8;font-weight:600}
+table.dt tbody tr.row-dim{opacity:.25}
+table.dt tbody tr.row-in{animation:rowSlideIn .35s ease forwards;opacity:0}
+@keyframes rowSlideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+table.dt tbody tr.row-del{background:rgba(239,68,68,.08)!important;text-decoration:line-through;opacity:.5}
+table.dt tbody tr.row-upd{background:rgba(5,150,105,.1)!important}
+table.dt tbody tr.row-new{background:rgba(59,130,246,.06)!important}
+table.dt td.td-match{background:rgba(59,130,246,.15);color:#1D4ED8;font-weight:600}
+table.dt tbody tr.row-processing td{color:#D97706;font-weight:600;background:rgba(251,191,36,.1)!important}
+table.dt tbody tr.row-done td{color:#059669;background:rgba(5,150,105,.07)!important}
+table.dt tbody tr.row-skip{opacity:.2}
+
+/* ── JOIN VIZ ── */
+.join-container{display:flex;flex-direction:column;gap:8px}
+.join-sources{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start}
+.join-icon-col{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:24px;gap:3px;font-size:20px;color:#BFDBFE}
+.join-type-lbl{font-size:8px;font-weight:700;color:#3B82F6;letter-spacing:.08em;text-transform:uppercase}
+.join-result-arrow{text-align:center;font-size:11px;color:#94A3B8;margin:2px 0}
+
+/* ── LOOP ANIMATION ── */
+.loop-ctrl{display:flex;align-items:center;gap:8px;padding:7px 0}
+.loop-prog{flex:1;height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden}
+.loop-prog-bar{height:100%;background:linear-gradient(90deg,#60A5FA,#3B82F6);border-radius:2px;transition:width .4s}
+.loop-iter-lbl{font-family:'Fira Code',monospace;font-size:10px;color:#64748B;white-space:nowrap}
+.lc-btn{width:26px;height:26px;border:1px solid #E2E8F0;background:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;color:#475569}
+.lc-btn:hover{border-color:#3B82F6;color:#3B82F6;background:#EFF6FF}
+.loop-wa{padding:6px 10px;background:#F8FAFF;border:1px solid #E2E8F0;border-radius:6px;font-family:'Fira Code',monospace;font-size:10px;line-height:1.6;min-height:28px;transition:all .3s}
+
+/* ── IF/CASE VIZ ── */
+.branches{display:flex;flex-direction:column;gap:4px}
+.branch-row{padding:6px 10px;border-radius:7px;border:1px solid #E2E8F0;font-family:'Fira Code',monospace;font-size:10px;background:#F8FAFF;transition:all .3s;display:flex;align-items:center;gap:8px}
+.branch-row.active{border-color:#3B82F6;background:rgba(59,130,246,.08)}
+.branch-kw{color:#3B82F6;font-weight:600}
+.branch-active-mark{margin-left:auto;font-size:9px;font-weight:700;color:#3B82F6}
+
+/* ── RESULT FOOTER ── */
+.sc-footer{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid #F1F5F9;background:#FAFBFF}
+.syrc{font-family:'Fira Code',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px}
+.syrc-ok{background:#D1FAE5;color:#059669}
+.syrc-fail{background:#FEE2E2;color:#DC2626}
+.result-chip{font-family:'Fira Code',monospace;font-size:10px;padding:2px 8px;border-radius:4px;background:#EFF6FF;color:#1D4ED8;font-weight:600}
+
+/* ── DB MODAL ── */
+#db-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+#db-modal.show{display:flex}
+.db-modal-box{background:#fff;border-radius:14px;padding:20px;width:700px;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.db-modal-title{font-size:16px;font-weight:700;color:#0F172A;border-bottom:1px solid #E2E8F0;padding-bottom:12px}
+.db-table-section{display:flex;flex-direction:column;gap:6px}
+.db-table-name{font-family:'Fira Code',monospace;font-size:11px;font-weight:700;color:#1D4ED8}
+
+/* ── MISC ── */
+.flex-r{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="tb-logo">
+    <div class="tb-dot"></div>
+    <div class="tb-title"><span>ABAP</span> Live Simulator</div>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-snippets">
+    <button class="snip-btn" onclick="loadSnippet('select_where')">SELECT + WHERE</button>
+    <button class="snip-btn" onclick="loadSnippet('inner_join')">INNER JOIN</button>
+    <button class="snip-btn" onclick="loadSnippet('fae')">FOR ALL ENTRIES</button>
+    <button class="snip-btn" onclick="loadSnippet('loop_read')">LOOP + READ TABLE</button>
+    <button class="snip-btn" onclick="loadSnippet('crud')">CRUD complet</button>
+    <button class="snip-btn" onclick="loadSnippet('control')">IF / CASE / DO</button>
+  </div>
+  <div class="tb-r">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-lbl" style="font-size:10px;color:#64748B">Prêt</span>
+    <button class="run-btn" id="run-btn" onclick="runAnalysis()">
+      <span>▶</span> Analyser
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- EDITOR PANEL -->
+  <div id="ep">
+    <div id="ep-header">
+      <div class="ep-tab"><div class="ep-tab-dot"></div>program.abap</div>
+      <span style="margin-left:auto">ABAP 7.40+</span>
+    </div>
+    <div id="editor-wrap">
+      <div id="line-nums"></div>
+      <div id="hl-layer" aria-hidden="true"></div>
+      <textarea id="code-input" 
+        spellcheck="false" 
+        autocorrect="off"
+        autocapitalize="off"
+        placeholder="Saisissez votre code ABAP ici..."
+        oninput="onCodeInput()"
+        onscroll="syncScroll()"
+        onkeydown="handleTab(event)"
+      ></textarea>
+    </div>
+    <div id="ep-footer">
+      <span id="cursor-pos">L1 C1</span>
+      <span id="char-count">0 chars</span>
+      <span style="margin-left:auto">Ctrl+Enter → Analyser</span>
+    </div>
+  </div>
+
+  <!-- VIZ PANEL -->
+  <div id="vp">
+    <div id="vp-header">
+      <div class="vp-title"><span>Execution</span> Visualizer</div>
+      <div id="vp-steps-count" class="hidden">0 étapes</div>
+      <div id="vp-db-info">
+        <span style="font-size:10px;color:#94A3B8">Base de données :</span>
+        <div class="db-chip" onclick="showDB()">📊 MARA</div>
+        <div class="db-chip" onclick="showDB()">📊 EKKO/EKPO</div>
+        <div class="db-chip" onclick="showDB()">📊 KNA1/VBAK</div>
+      </div>
+    </div>
+    <div id="vp-content">
+      <div id="empty-state">
+        <div class="es-icon">🔬</div>
+        <h3>Simulateur ABAP Live</h3>
+        <p>Saisissez du code ABAP dans l'éditeur et cliquez <b>Analyser</b> pour visualiser l'exécution étape par étape.</p>
+        <div class="es-hints">
+          <div class="es-hint">SELECT * FROM mara INTO TABLE @DATA(lt_mat).</div>
+          <div class="es-hint">LOOP AT lt_mat INTO DATA(ls). ENDLOOP.</div>
+          <div class="es-hint">READ TABLE lt_mat WITH KEY matnr = 'M001'.</div>
+        </div>
+      </div>
+      <div id="thinking-state">
+        <div class="think-label"><div class="think-spinner"></div>Analyse du code ABAP en cours...</div>
+        <div class="think-skel"></div>
+        <div class="think-skel" style="height:140px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DB MODAL -->
+<div id="db-modal">
+  <div class="db-modal-box">
+    <div class="db-modal-title">📊 Base de données simulée — Données générées aléatoirement</div>
+    <div id="db-modal-content"></div>
+    <button onclick="closeDB()" style="align-self:flex-end;padding:8px 20px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer">Fermer</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// IN-MEMORY SAP DATABASE — Generated once, stays consistent
+// ═══════════════════════════════════════════════════════
+
+const PICK = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const RNUM = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+const PAD = (n,len=10) => String(n).padStart(len,'0');
+
+function generateDB() {
+  const mMATNR = Array.from({length:8},(_,i)=>'M'+PAD(i+1,3));
+  const maktx = ['Produit fini Alpha','Matière première Beta','Semi-fini Gamma','Composant Delta','Article Epsilon','Pièce détachée Zeta','Produit ROH Eta','Article NLAG Theta'];
+  const mara = mMATNR.map((m,i)=>({
+    MATNR:m, MAKTX:maktx[i], MTART:PICK(['FERT','FERT','ROH','HALB','NLAG']),
+    MENGE:RNUM(0,500), MEINS:PICK(['ST','KG','L','M']), WERKS:PICK(['1000','2000','3000']),
+    MATKL:PICK(['FERT01','ROH01','HALB01']), BRGEW:RNUM(1,50)+'.'+RNUM(0,9)+'0'
+  }));
+
+  const ebelns = Array.from({length:5},(_,i)=>'45'+PAD(i+100001,7));
+  const ekko = ebelns.map(e=>({
+    EBELN:e, BUKRS:PICK(['1000','2000']), LIFNR:'VEND'+RNUM(1,4).toString().padStart(6,'0'),
+    BEDAT:'2024'+RNUM(1,12).toString().padStart(2,'0')+RNUM(1,28).toString().padStart(2,'0'),
+    NETWR:RNUM(500,50000), EKORG:PICK(['1000','2000']), EKGRP:PICK(['001','002','003'])
+  }));
+
+  const ekpo = [];
+  ebelns.forEach(e=>{
+    const npos = RNUM(1,3);
+    for(let p=1;p<=npos;p++){
+      ekpo.push({
+        EBELN:e, EBELP:String(p*10).padStart(5,'0'),
+        MATNR:PICK(mMATNR), MENGE:RNUM(10,500),
+        NETPR:RNUM(10,1000), WERKS:PICK(['1000','2000','3000']),
+        MATKL:PICK(['FERT01','ROH01'])
+      });
+    }
+  });
+
+  const kunnrs = Array.from({length:6},(_,i)=>'CUST'+PAD(i+1,6));
+  const kna1 = kunnrs.map(k=>({
+    KUNNR:k, NAME1:PICK(['Renault SA','Airbus Group','SNCF','Total Energy','Decathlon SA','Carrefour']),
+    LAND1:PICK(['FR','DE','ES','IT','BE']), ORT01:PICK(['Paris','Lyon','Marseille','Bordeaux','Lille','Strasbourg']),
+    STRAS:RNUM(1,99)+' Rue '+PICK(['de la Paix','Victor Hugo','Foch','Jaurès','République']),
+    TELF1:'0'+RNUM(100000000,799999999), KTOKD:'KUNA'
+  }));
+
+  const vbelnVA = Array.from({length:6},(_,i)=>PAD(i+10000001,10));
+  const vbak = vbelnVA.map(v=>({
+    VBELN:v, AUART:PICK(['TA','TA','OR']),
+    KUNNR:PICK(kunnrs),
+    AUDAT:'2024'+RNUM(1,12).toString().padStart(2,'0')+RNUM(1,28).toString().padStart(2,'0'),
+    NETWR:RNUM(100,20000), WAERK:'EUR', VKORG:PICK(['1000','2000']), VTWEG:'10'
+  }));
+
+  const vbap = [];
+  vbelnVA.forEach(v=>{
+    const n=RNUM(1,3);
+    for(let p=1;p<=n;p++){
+      vbap.push({
+        VBELN:v, POSNR:String(p*10).padStart(6,'0'),
+        MATNR:PICK(mMATNR), KWMENG:RNUM(1,100),
+        NETPR:RNUM(50,500), WERKS:PICK(['1000','2000'])
+      });
+    }
+  });
+
+  const bkpf = Array.from({length:7},(_,i)=>({
+    BELNR:PAD(RNUM(1000000,9999999),10), BUKRS:PICK(['1000','2000']),
+    GJAHR:'2024', BLDAT:'2024'+RNUM(1,12).toString().padStart(2,'0')+'15',
+    BLART:PICK(['RE','RN','SA','ZP']), MONAT:RNUM(1,12).toString().padStart(2,'0'),
+    USNAM:'USER'+RNUM(1,5)
+  }));
+
+  return {mara,ekko,ekpo,kna1,vbak,vbap,bkpf};
+}
+
+let DB = generateDB();
+
+const TABLE_META = {
+  mara:  { label:'MARA',  fields:['MATNR','MAKTX','MTART','MENGE','MEINS','WERKS'] },
+  ekko:  { label:'EKKO',  fields:['EBELN','BUKRS','LIFNR','BEDAT','NETWR','EKORG'] },
+  ekpo:  { label:'EKPO',  fields:['EBELN','EBELP','MATNR','MENGE','NETPR','WERKS'] },
+  kna1:  { label:'KNA1',  fields:['KUNNR','NAME1','LAND1','ORT01','STRAS'] },
+  vbak:  { label:'VBAK',  fields:['VBELN','AUART','KUNNR','AUDAT','NETWR','WAERK'] },
+  vbap:  { label:'VBAP',  fields:['VBELN','POSNR','MATNR','KWMENG','NETPR'] },
+  bkpf:  { label:'BKPF',  fields:['BELNR','BUKRS','GJAHR','BLDAT','BLART','MONAT'] },
+};
+
+function getTable(name) {
+  if(!name) return [];
+  const k = name.toLowerCase().replace(/[^a-z]/g,'');
+  return DB[k] || [];
+}
+
+// ═══════════════════════════════════════════════════════
+// EDITOR — Syntax highlighting + line numbers
+// ═══════════════════════════════════════════════════════
+const KEYWORDS = ['SELECT','FROM','INTO','TABLE','WHERE','AND','OR','NOT','LOOP','AT','ENDLOOP',
+  'READ','INDEX','WITH','KEY','BINARY','SEARCH','INSERT','APPEND','MODIFY','UPDATE','DELETE',
+  'IF','ELSEIF','ELSE','ENDIF','CASE','WHEN','OTHERS','ENDCASE','INNER','JOIN','LEFT','OUTER',
+  'FOR','ALL','ENTRIES','ASSIGNING','FIELD-SYMBOL','SINGLE','UP','TO','ROWS','ORDER','BY',
+  'GROUP','COUNT','SUM','MAX','MIN','AVG','DESCENDING','ASCENDING','TRANSPORTING','NO','FIELDS',
+  'TYPE','LIKE','LINE','OF','INITIAL','IN','IS','AS','ON','SET','ADJACENT','DUPLICATES',
+  'COMPARING','SORT','VALUE','BASE','COND','SWITCH','CORRESPONDING','WRITE','DO','TIMES',
+  'ENDDO','WHILE','ENDWHILE','CHECK','EXIT','CONTINUE','COLLECT','CLEAR','FREE','MOVE',
+  'ADD','SUBTRACT','DATA','TYPES','BEGIN','END','PERFORM','FORM','ENDFORM','REPORT',
+  'PARAMETERS','SELECT-OPTIONS','INITIALIZATION','START-OF-SELECTION','AT','NEW','ENDAT',
+  'CONCATENATE','SEPARATED','SPACE','LENGTH','STRLEN','CONDENSE','TRANSLATE','UPPER','LOWER',
+  'DESCRIBE','LINES','OCCURS','SORTED','HASHED','STANDARD','UNIQUE','NON-UNIQUE','PRIMARY'];
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function syntaxHL(code){
+  const lines = code.split('\n');
+  return lines.map(line=>{
+    // Comments
+    if(/^\s*[*"]/.test(line)) return `<span class="cm">${escHtml(line)}</span>`;
+    if(/^\s*\*/.test(line)) return `<span class="cm">${escHtml(line)}</span>`;
+    
+    let h = '';
+    let i = 0;
+    const chars = line;
+    
+    // Simple token-based highlighter
+    const tokens = tokenize(line);
+    return tokens.map(({type,val})=>{
+      const e = escHtml(val);
+      switch(type){
+        case 'kw':     return `<span class="kw">${e}</span>`;
+        case 'kw2':    return `<span class="kw2">${e}</span>`;
+        case 'str':    return `<span class="st">${e}</span>`;
+        case 'num':    return `<span class="nm">${e}</span>`;
+        case 'cm':     return `<span class="cm">${e}</span>`;
+        case 'fs':     return `<span class="fs">${e}</span>`;
+        case 'at':     return `<span class="at">${e}</span>`;
+        case 'table':  return `<span class="tp">${e}</span>`;
+        case 'var':    return `<span class="vr">${e}</span>`;
+        case 'fn':     return `<span class="fn">${e}</span>`;
+        default:       return e;
+      }
+    }).join('');
+  }).join('\n');
+}
+
+function tokenize(line){
+  const tokens=[];
+  let i=0;
+  const kw1 = new Set(['SELECT','FROM','INTO','TABLE','WHERE','AND','OR','NOT','LOOP','AT',
+    'ENDLOOP','READ','INDEX','WITH','KEY','BINARY','SEARCH','INSERT','APPEND','MODIFY',
+    'UPDATE','DELETE','IF','ELSEIF','ELSE','ENDIF','CASE','WHEN','OTHERS','ENDCASE',
+    'INNER','JOIN','LEFT','OUTER','FOR','ALL','ENTRIES','ASSIGNING','FIELD-SYMBOL',
+    'SINGLE','UP','TO','ROWS','ORDER','BY','GROUP','DESCENDING','ASCENDING','TRANSPORTING',
+    'NO','FIELDS','TYPE','LIKE','LINE','OF','INITIAL','IN','IS','AS','ON','SET',
+    'ADJACENT','DUPLICATES','COMPARING','SORT','VALUE','BASE','COND','SWITCH',
+    'CORRESPONDING','WRITE','DO','TIMES','ENDDO','WHILE','ENDWHILE','CHECK','EXIT',
+    'CONTINUE','CLEAR','FREE','DATA','TYPES','BEGIN','END','PERFORM','FORM','ENDFORM']);
+  const tables = new Set(['MARA','EKKO','EKPO','KNA1','VBAK','VBAP','BKPF','LFM1','T001',
+    'MARC','MARD','MVKE','KNVV','BSEG','SKB1']);
+  
+  while(i<line.length){
+    // comment
+    if(line[i]==='"'){tokens.push({type:'cm',val:line.slice(i)});break;}
+    // string
+    if(line[i]==="'"){
+      let j=i+1;while(j<line.length&&line[j]!=="'")j++;
+      tokens.push({type:'str',val:line.slice(i,j+1)});i=j+1;continue;
+    }
+    // string template
+    if(line[i]==='|'){
+      let j=i+1;while(j<line.length&&line[j]!=='|')j++;
+      tokens.push({type:'str',val:line.slice(i,j+1)});i=j+1;continue;
+    }
+    // field symbol
+    if(line[i]==='<'){
+      let j=i+1;while(j<line.length&&line[j]!=='>')j++;
+      tokens.push({type:'fs',val:line.slice(i,j+1)});i=j+1;continue;
+    }
+    // @
+    if(line[i]==='@'){
+      let j=i+1;
+      while(j<line.length&&/\w/.test(line[j]))j++;
+      const word=line.slice(i+1,j);
+      if(word.toUpperCase()==='DATA') tokens.push({type:'at',val:'@DATA'});
+      else tokens.push({type:'at',val:'@'+word});
+      i=j;continue;
+    }
+    // word
+    if(/[A-Za-z_]/.test(line[i])){
+      let j=i;while(j<line.length&&/[\w\-~]/.test(line[j]))j++;
+      const word=line.slice(i,j);
+      const up=word.toUpperCase();
+      if(kw1.has(up)) tokens.push({type:'kw',val:word});
+      else if(tables.has(up)) tokens.push({type:'table',val:word});
+      else if(/^(l[tsvgw]_|gs_|gt_|wa_)/i.test(word)) tokens.push({type:'var',val:word});
+      else if(/^(lines|line_exists|line_index|strlen|condense|count|sum|max|min)/i.test(word)) tokens.push({type:'fn',val:word});
+      else tokens.push({type:'text',val:word});
+      i=j;continue;
+    }
+    // number
+    if(/\d/.test(line[i])){
+      let j=i;while(j<line.length&&/[\d.]/.test(line[j]))j++;
+      tokens.push({type:'num',val:line.slice(i,j)});i=j;continue;
+    }
+    tokens.push({type:'text',val:line[i]});i++;
+  }
+  return tokens;
+}
+
+let debTimer=null;
+let lastCode='';
+
+function onCodeInput(){
+  const ta = document.getElementById('code-input');
+  const code = ta.value;
+  lastCode = code;
+  
+  // Update highlight
+  document.getElementById('hl-layer').innerHTML = syntaxHL(code);
+  
+  // Line numbers
+  updateLineNums(code);
+  
+  // Footer
+  const lines = code.split('\n');
+  const pos = ta.selectionStart;
+  let ln=1,col=1,cnt=0;
+  for(let i=0;i<pos;i++){if(code[i]==='\n'){ln++;col=1;}else col++;}
+  document.getElementById('cursor-pos').textContent=`L${ln} C${col}`;
+  document.getElementById('char-count').textContent=`${code.length} chars`;
+  
+  // Auto-debounce
+  clearTimeout(debTimer);
+  if(code.trim()){
+    setStatus('thinking','Analyse dans 1s...');
+    debTimer=setTimeout(()=>runAnalysis(),1200);
+  }
+}
+
+function syncScroll(){
+  const ta=document.getElementById('code-input');
+  const hl=document.getElementById('hl-layer');
+  const ln=document.getElementById('line-nums');
+  hl.scrollTop=ta.scrollTop;
+  hl.scrollLeft=ta.scrollLeft;
+  ln.scrollTop=ta.scrollTop;
+}
+
+function updateLineNums(code){
+  const lines=code.split('\n');
+  const ta=document.getElementById('code-input');
+  const pos=ta.selectionStart;
+  let curLine=1,cnt=0;
+  for(let i=0;i<pos&&i<code.length;i++){if(code[i]==='\n')curLine++;}
+  document.getElementById('line-nums').innerHTML=
+    lines.map((_,i)=>`<span class="ln${i+1===curLine?' active-ln':''}">${i+1}</span>`).join('');
+}
+
+function handleTab(e){
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const ta=e.target;
+    const s=ta.selectionStart,end=ta.selectionEnd;
+    ta.value=ta.value.substring(0,s)+'  '+ta.value.substring(end);
+    ta.selectionStart=ta.selectionEnd=s+2;
+    onCodeInput();
+  }
+  if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();runAnalysis();}
+}
+
+function setStatus(state,msg){
+  const dot=document.getElementById('status-dot');
+  const lbl=document.getElementById('status-lbl');
+  dot.className='status-dot'+(state==='ok'?' ok':state==='thinking'?' thinking':state==='err'?' err':'');
+  lbl.textContent=msg||'';
+}
+
+// ═══════════════════════════════════════════════════════
+// ABAP PARSER — Local regex-based (instant + accurate)
+// ═══════════════════════════════════════════════════════
+
+function parseABAP(code){
+  const steps=[];
+  const lines=code.split('\n');
+  
+  // Build multi-line statements
+  const stmts=[];
+  let cur='',rawCur='',startLine=0;
+  
+  lines.forEach((line,li)=>{
+    const t=line.trim();
+    if(!t||t.startsWith('*')||t.startsWith('"')){
+      if(cur.trim()) {/* keep building */}
+      return;
+    }
+    if(!cur.trim()) startLine=li;
+    cur+=' '+t.toUpperCase();
+    rawCur+=(rawCur?'\n':'')+line.trim();
+    
+    if(t.endsWith('.')||t.match(/\b(ENDLOOP|ENDIF|ENDCASE|ENDDO|ENDWHILE|ENDFORM)\b/i)){
+      stmts.push({stmt:cur.trim(),raw:rawCur.trim(),line:startLine});
+      cur='';rawCur='';
+    }
+  });
+  if(cur.trim()) stmts.push({stmt:cur.trim(),raw:rawCur.trim(),line:startLine});
+  
+  // Track itab→table mapping
+  const itabMap={};
+  
+  // Parse each statement
+  let i=0;
+  while(i<stmts.length){
+    const {stmt,raw,line}=stmts[i];
+    const s=stmt;
+    
+    // ── SELECT ──
+    if(/^\s*SELECT\b/.test(s)){
+      const step=parseSelectStmt(s,raw,itabMap);
+      if(step){steps.push(step);}
+      i++;continue;
+    }
+    // ── LOOP AT ──
+    if(/^\s*LOOP\s+AT\b/.test(s)){
+      const step=parseLoopStmt(s,raw,itabMap);
+      // Collect loop body
+      const bodyStmts=[];
+      i++;
+      while(i<stmts.length&&!/^\s*ENDLOOP/.test(stmts[i].stmt)){
+        bodyStmts.push(stmts[i]);
+        i++;
+      }
+      if(step){step.body=bodyStmts;step.raw+=bodyStmts.map(b=>'\n'+b.raw).join('')+'\nENDLOOP.';steps.push(step);}
+      i++;continue;
+    }
+    // ── READ TABLE ──
+    if(/^\s*READ\s+TABLE\b/.test(s)){
+      const step=parseReadStmt(s,raw,itabMap);
+      if(step)steps.push(step);
+      i++;continue;
+    }
+    // ── APPEND ──
+    if(/^\s*APPEND\b/.test(s)){
+      const m=s.match(/APPEND\s+(?:VALUE\s+#\(.*?\)|(\S+))\s+TO\s+(\S+)/i);
+      if(m){
+        const itab=(m[2]||'').replace('.','');
+        const srcTbl=itabMap[itab.toLowerCase()]||itabMap[itab]||null;
+        steps.push({type:'APPEND',itabVar:itab,table:srcTbl,raw,snippet:raw,description:`APPEND ligne → ${itab}`});
+      }
+      i++;continue;
+    }
+    // ── INSERT ──
+    if(/^\s*INSERT\b/.test(s)&&!/^\s*INSERT\s+INITIAL/.test(s)){
+      const m=s.match(/INSERT\s+(\S+)\s+(?:INTO|FROM)\s+(?:TABLE\s+)?(\S+)/i);
+      if(m){
+        const itab=(m[2]||'').replace('.','');
+        steps.push({type:'INSERT',itabVar:itab,raw,snippet:raw,description:`INSERT → ${itab}`});
+      }
+      i++;continue;
+    }
+    // ── MODIFY ──
+    if(/^\s*MODIFY\b/.test(s)){
+      const m=s.match(/MODIFY\s+(\S+)/i);
+      if(m){
+        const target=(m[1]||'').replace('.','');
+        const srcTbl=itabMap[target.toLowerCase()]||null;
+        steps.push({type:'MODIFY',itabVar:target,table:srcTbl,raw,snippet:raw,description:`MODIFY ${target}`});
+      }
+      i++;continue;
+    }
+    // ── UPDATE ──
+    if(/^\s*UPDATE\b/.test(s)){
+      const m=s.match(/UPDATE\s+(\S+)/i);
+      if(m){
+        const target=(m[1]||'').replace('.','').toLowerCase();
+        steps.push({type:'UPDATE',table:target,raw,snippet:raw,description:`UPDATE ${target.toUpperCase()}`});
+      }
+      i++;continue;
+    }
+    // ── DELETE ──
+    if(/^\s*DELETE\b/.test(s)){
+      const step=parseDeleteStmt(s,raw,itabMap);
+      if(step)steps.push(step);
+      i++;continue;
+    }
+    // ── SORT ──
+    if(/^\s*SORT\b/.test(s)){
+      const m=s.match(/SORT\s+(\S+)\s+BY\s+([\w\s]+?)(?:\s+DESCENDING|\s+ASCENDING)?\s*\./i);
+      if(m){
+        const itab=(m[1]||'').replace('.','');
+        const byFields=(m[2]||'').trim().split(/\s+/);
+        const srcTbl=itabMap[itab.toLowerCase()]||null;
+        steps.push({type:'SORT',itabVar:itab,table:srcTbl,byFields,raw,snippet:raw,description:`SORT ${itab} BY ${byFields.join(', ')}`});
+      }
+      i++;continue;
+    }
+    // ── IF ──
+    if(/^\s*IF\b/.test(s)){
+      const step=parseIfStmt(s,raw,stmts,i);
+      if(step){steps.push(step);i+=step._consumed||1;}
+      else i++;
+      continue;
+    }
+    // ── CASE ──
+    if(/^\s*CASE\b/.test(s)){
+      const step=parseCaseStmt(s,raw,stmts,i);
+      if(step){steps.push(step);i+=step._consumed||1;}
+      else i++;
+      continue;
+    }
+    // ── DO / WHILE ──
+    if(/^\s*DO\b/.test(s)){
+      const m=s.match(/DO\s+(\d+)\s+TIMES/i);
+      const n=m?parseInt(m[1]):3;
+      steps.push({type:'DO',times:n,raw,snippet:raw,description:`DO ${n} TIMES`});
+      i++;continue;
+    }
+    i++;
+  }
+  return steps;
+}
+
+function parseSelectStmt(s,raw,itabMap){
+  // Detect JOIN
+  const hasInnerJoin=/\bINNER\s+JOIN\b/.test(s);
+  const hasLeftJoin=/\bLEFT\s+OUTER\s+JOIN\b/.test(s)||/\bLEFT\s+JOIN\b/.test(s);
+  const hasFAE=/\bFOR\s+ALL\s+ENTRIES\s+IN\b/.test(s);
+  const isSingle=/\bSELECT\s+SINGLE\b/.test(s);
+  
+  // Extract table
+  const fromM=s.match(/\bFROM\s+(\w+)/i);
+  const table=(fromM?fromM[1]:'').toLowerCase();
+  
+  // Extract fields
+  let fields=['*'];
+  const selM=s.match(/^SELECT\s+(.+?)\s+FROM/i);
+  if(selM){
+    const fs=selM[1].trim();
+    if(fs!=='*'&&fs!=='SINGLE *'){
+      fields=fs.replace(/SINGLE\s*/i,'').trim().split(/[\s,]+/).filter(Boolean);
+    }
+  }
+  
+  // Extract INTO itab
+  const intoM=s.match(/INTO\s+(?:TABLE\s+)?@?(?:DATA\()?(\w+)\)?/i);
+  const itabVar=intoM?(intoM[1]||'').replace(/[()]/g,''):'lt_result';
+  if(table&&itabVar) itabMap[itabVar.toLowerCase()]=table;
+  
+  // Extract WHERE conditions
+  const whereM=s.match(/WHERE\s+(.+?)(?:ORDER BY|UP TO|GROUP BY|FOR ALL|\.|$)/i);
+  const whereTxt=whereM?(whereM[1]||'').trim():'';
+  
+  // Extract UP TO
+  const uptoM=s.match(/UP\s+TO\s+(\d+)\s+ROWS/i);
+  const upTo=uptoM?parseInt(uptoM[1]):null;
+  
+  // Extract JOIN info
+  let joinTable=null,joinOn=null;
+  if(hasInnerJoin||hasLeftJoin){
+    const j2M=s.match(/(?:INNER|LEFT\s+OUTER?)\s+JOIN\s+(\w+)/i);
+    joinTable=(j2M?j2M[1]:'').toLowerCase();
+    const onM=s.match(/\bON\s+(.+?)(?:WHERE|\bINTO|$)/i);
+    joinOn=onM?(onM[1]||'').trim():'';
+    if(joinTable) itabMap[joinTable.toLowerCase()]=joinTable.toLowerCase();
+  }
+  
+  // Extract FAE itab
+  let faeItab=null;
+  if(hasFAE){
+    const faeM=s.match(/FOR\s+ALL\s+ENTRIES\s+IN\s+@?(\w+)/i);
+    faeItab=faeM?(faeM[1]||''):'';
+  }
+  
+  const joinType=hasInnerJoin?'INNER':hasLeftJoin?'LEFT_OUTER':hasFAE?'FAE':null;
+  
+  return {
+    type:'SELECT',table,fields,itabVar,where:whereTxt,upTo,
+    joinType,joinTable,joinOn,faeItab,isSingle,
+    raw,snippet:raw,
+    description:`SELECT ${isSingle?'SINGLE ':''} FROM ${table.toUpperCase()}${joinType?' + '+joinType+' JOIN':''} → ${itabVar}`
+  };
+}
+
+function parseLoopStmt(s,raw,itabMap){
+  const m=s.match(/LOOP\s+AT\s+(\S+)/i);
+  const itabVar=m?(m[1]||'').replace('.',''):'';
+  const table=itabMap[itabVar.toLowerCase()]||null;
+  
+  const intoM=s.match(/INTO\s+(?:DATA\()?(\w+)\)?/i);
+  const waVar=intoM?(intoM[1]||''):'';
+  const isAssigning=/ASSIGNING/.test(s);
+  
+  const whereM=s.match(/WHERE\s+(.+?)(?:\.|$)/i);
+  const whereTxt=whereM?(whereM[1]||'').trim():'';
+  
+  return {
+    type:'LOOP',itabVar,waVar,table,loopMode:isAssigning?'ASSIGNING':'INTO',
+    where:whereTxt,raw,snippet:raw,body:[],
+    description:`LOOP AT ${itabVar} ${isAssigning?'ASSIGNING':'INTO DATA('+waVar+')'}`
+  };
+}
+
+function parseReadStmt(s,raw,itabMap){
+  const m=s.match(/READ\s+TABLE\s+(\S+)/i);
+  const itabVar=m?(m[1]||'').replace('.',''):'';
+  const table=itabMap[itabVar.toLowerCase()]||null;
+  
+  const isBinary=/BINARY\s+SEARCH/.test(s);
+  const indexM=s.match(/INDEX\s+(\d+)/i);
+  const readIndex=indexM?parseInt(indexM[1]):null;
+  
+  const keyM=s.match(/WITH\s+KEY\s+([\w\s='"]+?)(?:INTO|ASSIGNING|BINARY|TRANSPORTING|\.|$)/i);
+  const keyTxt=keyM?(keyM[1]||'').trim():'';
+  
+  const isAssigning=/ASSIGNING/.test(s);
+  
+  let mode='KEY';
+  if(readIndex!==null) mode='INDEX';
+  if(isBinary) mode='BINARY';
+  
+  return {
+    type:'READ',itabVar,table,readMode:mode,readIndex,readKey:keyTxt,isAssigning,
+    raw,snippet:raw,
+    description:`READ TABLE ${itabVar} ${mode==='INDEX'?'INDEX '+readIndex:mode==='BINARY'?'BINARY SEARCH':'WITH KEY'}`
+  };
+}
+
+function parseDeleteStmt(s,raw,itabMap){
+  const m=s.match(/DELETE\s+(?:ADJACENT\s+DUPLICATES\s+FROM\s+)?(\S+)/i);
+  const target=m?(m[1]||'').replace('.',''):'';
+  const isAdj=/ADJACENT\s+DUPLICATES/.test(s);
+  const isDB=/DELETE\s+FROM\b/.test(s)||/DELETE\s+(MARA|EKKO|EKPO|KNA1|VBAK|VBAP|BKPF)\b/i.test(s);
+  
+  const indexM=s.match(/INDEX\s+(\d+)/i);
+  const whereM=s.match(/WHERE\s+(.+?)(?:\.|$)/i);
+  
+  const table=isDB?target.toLowerCase():(itabMap[target.toLowerCase()]||null);
+  
+  return {
+    type:'DELETE',itabVar:isDB?null:target,table,
+    deleteMode:isAdj?'ADJACENT':indexM?'INDEX':whereM?'WHERE':'KEY',
+    deleteIndex:indexM?parseInt(indexM[1]):null,
+    whereClause:whereM?(whereM[1]||'').trim():'',
+    raw,snippet:raw,
+    description:`DELETE ${target}${isAdj?' ADJACENT DUPLICATES':''}${whereM?' WHERE ...':''}`
+  };
+}
+
+function parseIfStmt(s,raw,stmts,startI){
+  const cond=s.match(/IF\s+(.+?)(?:ELSEIF|ELSE|ENDIF|\.|$)/i)?.[1]?.trim()||'condition';
+  let consumed=1;
+  const branches=[{cond,label:`IF ${cond}`},{cond:'ELSE',label:'ELSE'},{cond:'ENDIF',label:'ENDIF'}];
+  return {type:'IF',condition:cond,branches,raw,snippet:raw,_consumed:consumed,
+    description:`IF ${cond}`};
+}
+
+function parseCaseStmt(s,raw,stmts,startI){
+  const varM=s.match(/CASE\s+(\S+)/i);
+  const variable=varM?(varM[1]||'').replace('.',''):'';
+  return {type:'CASE',variable,raw,snippet:raw,_consumed:1,description:`CASE ${variable}`};
+}
+
+// ═══════════════════════════════════════════════════════
+// DATA EXECUTION — Apply steps to DB data
+// ═══════════════════════════════════════════════════════
+
+// Track itab contents across steps
+const SESSION = {};
+
+function executeStep(step){
+  const result={rows:[],sourceRows:[],joinRows:[],highlights:[]};
+  
+  if(step.type==='SELECT'){
+    let rows=[...getTable(step.table)];
+    result.sourceRows=[...rows];
+    
+    // Apply WHERE (simple field=value matching)
+    if(step.where){
+      const conds=parseWhereConds(step.where);
+      rows=applyWhere(rows,conds);
+    }
+    
+    // Handle JOIN
+    if(step.joinType==='INNER'||step.joinType==='LEFT_OUTER'){
+      const t2rows=[...getTable(step.joinTable)];
+      result.joinRows=[...t2rows];
+      const joinKey=extractJoinKey(step.joinOn);
+      
+      if(step.joinType==='INNER'){
+        const joined=[];
+        rows.forEach(r1=>{
+          const matches=t2rows.filter(r2=>joinKeyMatch(r1,r2,joinKey));
+          matches.forEach(r2=>joined.push({...r1,...r2}));
+        });
+        rows=joined;
+      } else {
+        const joined=[];
+        rows.forEach(r1=>{
+          const matches=t2rows.filter(r2=>joinKeyMatch(r1,r2,joinKey));
+          if(matches.length) matches.forEach(r2=>joined.push({...r1,...r2}));
+          else joined.push({...r1});
+        });
+        rows=joined;
+      }
+    }
+    
+    if(step.joinType==='FAE'&&step.faeItab){
+      const pilot=SESSION[step.faeItab.toLowerCase()]||[];
+      if(pilot.length){
+        const pilotKeys=pilot.map(r=>Object.values(r)[0]).filter(Boolean);
+        const keyField=getTable(step.table).length?Object.keys(getTable(step.table)[0])[0]:'';
+        rows=rows.filter(r=>pilotKeys.includes(r[keyField]));
+      }
+    }
+    
+    if(step.upTo) rows=rows.slice(0,step.upTo);
+    if(step.isSingle) rows=rows.slice(0,1);
+    
+    // Apply field projection
+    if(step.fields&&step.fields[0]!=='*'){
+      const f=step.fields.map(x=>x.toUpperCase().replace(/\w+~/,''));
+      rows=rows.map(r=>{const o={};f.forEach(k=>{const v=Object.entries(r).find(([k2])=>k2.toUpperCase()===k);if(v)o[v[0]]=v[1];});return o;});
+    }
+    
+    result.rows=rows;
+    if(step.itabVar) SESSION[step.itabVar.toLowerCase()]=rows;
+    result.found=rows.length>0;
+    result.subrc=rows.length>0?0:4;
+  }
+  
+  else if(step.type==='LOOP'){
+    let rows=SESSION[step.itabVar.toLowerCase()]||getTable(step.table)||[];
+    result.sourceRows=[...rows];
+    if(step.where){
+      const conds=parseWhereConds(step.where);
+      rows=applyWhere(rows,conds);
+    }
+    result.rows=rows;
+    result.found=rows.length>0;
+    result.subrc=0;
+  }
+  
+  else if(step.type==='READ'){
+    const rows=SESSION[step.itabVar.toLowerCase()]||getTable(step.table)||[];
+    result.sourceRows=[...rows];
+    let foundIdx=-1;
+    
+    if(step.readMode==='INDEX'&&step.readIndex!=null){
+      foundIdx=step.readIndex-1;
+    } else if(step.readKey){
+      const conds=parseWhereConds(step.readKey);
+      foundIdx=rows.findIndex(r=>applyWhere([r],conds).length>0);
+    }
+    
+    if(foundIdx>=0&&foundIdx<rows.length){
+      result.foundRow=rows[foundIdx];
+      result.foundIndex=foundIdx;
+      result.tabix=foundIdx+1;
+      result.found=true;
+      result.subrc=0;
+    } else {
+      result.found=false;
+      result.subrc=4;
+    }
+    result.rows=rows;
+  }
+  
+  else if(step.type==='APPEND'||step.type==='INSERT'){
+    const rows=SESSION[step.itabVar?.toLowerCase()]||getTable(step.table)||[];
+    const srcMeta=TABLE_META[step.table]||TABLE_META['mara'];
+    const newRow=generateSingleRow(step.table||'mara');
+    result.sourceRows=[...rows];
+    if(step.type==='APPEND') result.rows=[...rows,newRow];
+    else result.rows=[newRow,...rows];
+    result.newRow=newRow;
+    result.found=true;result.subrc=0;
+    SESSION[step.itabVar?.toLowerCase()]=result.rows;
+  }
+  
+  else if(step.type==='MODIFY'||step.type==='UPDATE'){
+    const rows=SESSION[step.itabVar?.toLowerCase()]||getTable(step.table)||[];
+    result.sourceRows=[...rows];
+    result.rows=rows.map((r,i)=>i===Math.floor(rows.length/2)?{...r,__modified:true}:r);
+    result.modifiedIdx=Math.floor(rows.length/2);
+    result.found=true;result.subrc=0;
+  }
+  
+  else if(step.type==='DELETE'){
+    let rows=SESSION[step.itabVar?.toLowerCase()]||getTable(step.table)||[];
+    result.sourceRows=[...rows];
+    if(step.deleteMode==='INDEX'&&step.deleteIndex){
+      result.deletedIdx=step.deleteIndex-1;
+      result.rows=rows.filter((_,i)=>i!==step.deleteIndex-1);
+    } else if(step.deleteMode==='WHERE'&&step.whereClause){
+      const conds=parseWhereConds(step.whereClause);
+      result.deletedRows=applyWhere(rows,conds);
+      result.rows=rows.filter(r=>applyWhere([r],conds).length===0);
+    } else {
+      result.rows=rows.slice(0,rows.length-1);
+      result.deletedIdx=rows.length-1;
+    }
+    result.found=true;result.subrc=0;
+    if(step.itabVar) SESSION[step.itabVar.toLowerCase()]=result.rows;
+  }
+  
+  else if(step.type==='SORT'){
+    const rows=SESSION[step.itabVar?.toLowerCase()]||getTable(step.table)||[];
+    const byF=step.byFields?.[0]||'';
+    result.sourceRows=[...rows];
+    result.rows=[...rows].sort((a,b)=>{
+      const k=Object.keys(a).find(k=>k.toUpperCase()===byF.toUpperCase())||Object.keys(a)[0];
+      return String(a[k]).localeCompare(String(b[k]));
+    });
+    result.found=true;result.subrc=0;
+    if(step.itabVar) SESSION[step.itabVar.toLowerCase()]=result.rows;
+  }
+  
+  else if(step.type==='IF'){
+    result.rows=[];result.found=true;result.subrc=0;
+    result.condition=step.condition;
+  }
+  
+  else if(step.type==='CASE'){
+    result.rows=[];result.found=true;result.subrc=0;
+    result.variable=step.variable;
+  }
+  
+  else if(step.type==='DO'){
+    result.rows=[];result.found=true;result.subrc=0;
+    result.times=step.times;
+  }
+  
+  return result;
+}
+
+function parseWhereConds(whereStr){
+  if(!whereStr)return[];
+  const conds=[];
+  const parts=whereStr.split(/\bAND\b/i);
+  parts.forEach(p=>{
+    const m=p.match(/(\w+[\w~]*)\s*(?:=|EQ)\s*['@]?([^'\s]+)'?/i);
+    if(m)conds.push({field:m[1].replace(/\w+~/,'').toUpperCase(),value:m[2].replace(/['\.]/g,'')});
+  });
+  return conds;
+}
+
+function applyWhere(rows,conds){
+  if(!conds.length)return rows;
+  return rows.filter(r=>{
+    return conds.every(c=>{
+      const k=Object.keys(r).find(k=>k.toUpperCase()===c.field);
+      if(!k)return true;
+      return String(r[k]).toUpperCase().includes(c.value.toUpperCase());
+    });
+  });
+}
+
+function extractJoinKey(onStr){
+  if(!onStr)return{f1:'EBELN',f2:'EBELN'};
+  const m=onStr.match(/(\w+)~(\w+)\s*=\s*(\w+)~(\w+)/i);
+  if(m)return{f1:m[2].toUpperCase(),f2:m[4].toUpperCase()};
+  return{f1:'EBELN',f2:'EBELN'};
+}
+
+function joinKeyMatch(r1,r2,jk){
+  const v1=Object.entries(r1).find(([k])=>k.toUpperCase()===jk.f1)?.[1];
+  const v2=Object.entries(r2).find(([k])=>k.toUpperCase()===jk.f2)?.[1];
+  return v1&&v2&&String(v1)===String(v2);
+}
+
+function generateSingleRow(table){
+  const meta=TABLE_META[table?.toLowerCase()]||TABLE_META['mara'];
+  const all=getTable(table)||DB.mara;
+  const base=all[Math.floor(Math.random()*all.length)]||{};
+  return {...base,[meta.fields[0]]:'NEW_'+RNUM(100,999)};
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER STEPS
+// ═══════════════════════════════════════════════════════
+
+const TYPE_COLORS={
+  SELECT:'badge-select',LOOP:'badge-loop',READ:'badge-read',
+  APPEND:'badge-insert',INSERT:'badge-insert',MODIFY:'badge-modify',
+  UPDATE:'badge-update',DELETE:'badge-delete',IF:'badge-if',
+  CASE:'badge-case',SORT:'badge-sort',WRITE:'badge-write',DO:'badge-if'
+};
+
+function renderAllSteps(steps){
+  const content=document.getElementById('vp-content');
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('thinking-state').style.display='none';
+  
+  const existing=content.querySelectorAll('.step-card');
+  existing.forEach(e=>e.remove());
+  
+  const count=document.getElementById('vp-steps-count');
+  count.classList.remove('hidden');
+  count.textContent=`${steps.length} étape${steps.length>1?'s':''}`;
+  
+  if(!steps.length){
+    document.getElementById('empty-state').style.display='flex';
+    return;
+  }
+  
+  steps.forEach((step,idx)=>{
+    const result=executeStep(step);
+    const card=renderStep(step,result,idx);
+    card.style.animationDelay=(idx*80)+'ms';
+    content.appendChild(card);
+    
+    // Trigger LOOP animation after card appears
+    if(step.type==='LOOP'){
+      setTimeout(()=>startLoopAnim(card,result,idx),300+idx*80);
+    }
+  });
+}
+
+function renderStep(step,result,idx){
+  const card=document.createElement('div');
+  card.className='step-card';
+  
+  const badge=TYPE_COLORS[step.type]||'badge-select';
+  const tableLabel=step.table?step.table.toUpperCase():step.itabVar||'';
+  const itabLabel=step.itabVar||step.table||'';
+  
+  // Head — build context tokens per type
+  let headHTML=`<div class="sc-head">
+    <span class="sc-step-num">STEP ${idx+1}</span>
+    <span class="sc-badge ${badge}">${step.type}</span>`;
+  
+  if(step.type==='SELECT'){
+    if(step.table) headHTML+=`<span class="sc-table-name">${step.table.toUpperCase()}</span>`;
+    if(step.joinType&&step.joinTable) headHTML+=`<span class="sc-arrow">⟷</span><span class="sc-table-name">${step.joinTable.toUpperCase()}</span>`;
+    if(step.itabVar) headHTML+=`<span class="sc-arrow">→</span><span class="sc-itab-name">${step.itabVar}</span>`;
+  } else if(step.type==='LOOP'){
+    headHTML+=`<span class="sc-itab-name">${step.itabVar}</span>`;
+    if(step.loopMode==='ASSIGNING') headHTML+=`<span class="sc-arrow">→</span><span class="sc-itab-name">&lt;fs&gt;</span>`;
+    else if(step.waVar) headHTML+=`<span class="sc-arrow">→</span><span class="sc-itab-name">DATA(${step.waVar})</span>`;
+    if(step.where) headHTML+=`<span style="font-size:9px;color:#94A3B8;font-family:'Fira Code',monospace;margin-left:4px">WHERE ${step.where}</span>`;
+  } else if(step.type==='READ'){
+    headHTML+=`<span class="sc-itab-name">${step.itabVar}</span>`;
+    headHTML+=`<span class="sc-arrow">·</span><span style="font-size:9px;color:#0E7490;font-family:'Fira Code',monospace">${step.readMode==='INDEX'?'INDEX '+step.readIndex:step.readMode==='BINARY'?'BINARY SEARCH':'WITH KEY'}</span>`;
+  } else if(step.type==='SORT'){
+    headHTML+=`<span class="sc-itab-name">${step.itabVar}</span>`;
+    if(step.byFields?.length) headHTML+=`<span class="sc-arrow">BY</span><span style="font-size:9px;font-family:'Fira Code',monospace;color:#7C3AED">${step.byFields.join(', ')}</span>`;
+  } else if(step.type==='APPEND'||step.type==='INSERT'){
+    headHTML+=`<span class="sc-arrow">→</span><span class="sc-itab-name">${step.itabVar||step.table||''}</span>`;
+  } else if(step.type==='MODIFY'||step.type==='UPDATE'){
+    headHTML+=`<span class="sc-itab-name">${step.itabVar||step.table?.toUpperCase()||''}</span>`;
+  } else if(step.type==='DELETE'){
+    headHTML+=`<span class="sc-itab-name">${step.itabVar||step.table?.toUpperCase()||''}</span>`;
+    if(step.deleteMode) headHTML+=`<span class="sc-arrow">·</span><span style="font-size:9px;color:#991B1B;font-family:'Fira Code',monospace">${step.deleteMode}</span>`;
+  } else if(step.type==='IF'){
+    headHTML+=`<span style="font-family:'Fira Code',monospace;font-size:10px;color:#92400E">${step.condition}</span>`;
+  } else if(step.type==='CASE'){
+    headHTML+=`<span style="font-family:'Fira Code',monospace;font-size:10px;color:#92400E">${step.variable}</span>`;
+  } else if(step.type==='DO'){
+    headHTML+=`<span style="font-family:'Fira Code',monospace;font-size:10px;color:#92400E">${step.times} TIMES</span>`;
+  }
+  
+  headHTML+=`<span class="sc-desc">${step.description||''}</span></div>`;
+  
+  // Snippet
+  const snippetHTML=`<div class="sc-snippet" onclick="this.classList.toggle('expanded')" title="Cliquez pour développer">${syntaxHL(step.snippet||step.raw||'')}</div>`;
+  
+  // Body
+  let bodyHTML=`<div class="sc-body">`;
+  
+  if(step.type==='SELECT'){
+    bodyHTML+=renderSelectViz(step,result,idx);
+  } else if(step.type==='LOOP'){
+    bodyHTML+=renderLoopViz(step,result,idx);
+  } else if(step.type==='READ'){
+    bodyHTML+=renderReadViz(step,result,idx);
+  } else if(step.type==='APPEND'||step.type==='INSERT'){
+    bodyHTML+=renderInsertViz(step,result,idx);
+  } else if(step.type==='MODIFY'||step.type==='UPDATE'){
+    bodyHTML+=renderModifyViz(step,result,idx);
+  } else if(step.type==='DELETE'){
+    bodyHTML+=renderDeleteViz(step,result,idx);
+  } else if(step.type==='SORT'){
+    bodyHTML+=renderSortViz(step,result,idx);
+  } else if(step.type==='IF'){
+    bodyHTML+=renderIfViz(step,result,idx);
+  } else if(step.type==='CASE'){
+    bodyHTML+=renderCaseViz(step,result,idx);
+  } else if(step.type==='DO'){
+    bodyHTML+=renderDoViz(step,result,idx);
+  }
+  
+  bodyHTML+=`</div>`;
+  
+  // Footer
+  const subrcOk=result.subrc===0;
+  let footerHTML=`<div class="sc-footer">
+    <span class="syrc ${subrcOk?'syrc-ok':'syrc-fail'}">sy-subrc = ${result.subrc||0}</span>`;
+  
+  if(result.rows?.length!=null&&step.type!=='IF'&&step.type!=='CASE'&&step.type!=='DO'){
+    footerHTML+=`<span class="result-chip">${result.rows.length} ligne${result.rows.length!==1?'s':''}</span>`;
+  }
+  if(result.tabix!=null){
+    footerHTML+=`<span class="result-chip">sy-tabix = ${result.tabix}</span>`;
+  }
+  footerHTML+=`</div>`;
+  
+  card.innerHTML=headHTML+snippetHTML+bodyHTML+footerHTML;
+  return card;
+}
+
+function renderSelectViz(step,result,idx){
+  // JOIN case
+  if(step.joinType==='INNER'||step.joinType==='LEFT_OUTER'){
+    return renderJoinViz(step,result,idx);
+  }
+  // FAE case
+  if(step.joinType==='FAE'){
+    return renderFAEViz(step,result,idx);
+  }
+  
+  // Simple SELECT
+  let html='';
+  const srcRows=result.sourceRows||[];
+  const resRows=result.rows||[];
+  const hasFilter=step.where&&step.where.length>0;
+  
+  if(hasFilter&&srcRows.length){
+    html+=`<div class="data-section">
+      <div class="ds-label">📋 ${step.table?.toUpperCase()||'TABLE'} (source) <span class="ds-count count-blue">${srcRows.length} lignes</span></div>
+      ${mkTableHTML(srcRows,resRows,false,'src-'+idx,6)}
+    </div>`;
+    html+=`<div style="text-align:center;font-size:12px;color:#94A3B8;margin:2px 0">WHERE ${step.where} ↓ filtre</div>`;
+  }
+  
+  html+=`<div class="data-section">
+    <div class="ds-label">${hasFilter?'✅':'📋'} ${step.itabVar||'lt_result'} ${hasFilter?'(filtré)':'(résultat)'} <span class="ds-count count-green">${resRows.length} ligne${resRows.length!==1?'s':''}</span></div>
+    ${mkTableHTML(resRows,[],'all','res-'+idx,step.upTo||8)}
+  </div>`;
+  
+  if(step.upTo){
+    html+=`<div class="ins" style="font-size:10px;color:#64748B;background:#F8FAFF;border:1px solid #E2E8F0;border-left:3px solid #3B82F6;border-radius:0 6px 6px 0;padding:6px 10px">
+      💡 <b>UP TO ${step.upTo} ROWS</b> — Seulement les ${step.upTo} premières lignes sont chargées.
+    </div>`;
+  }
+  
+  return html;
+}
+
+function renderJoinViz(step,result,idx){
+  const src1=result.sourceRows||[];
+  const src2=result.joinRows||[];
+  const res=result.rows||[];
+  
+  const t1=step.table?.toUpperCase()||'TABLE1';
+  const t2=step.joinTable?.toUpperCase()||'TABLE2';
+  const jlabel=step.joinType==='INNER'?'INNER JOIN':'LEFT OUTER JOIN';
+  const jicon=step.joinType==='INNER'?'⟷':'⟵';
+  
+  let html=`<div class="join-container">
+    <div class="join-sources">
+      <div class="data-section">
+        <div class="ds-label">📋 ${t1} <span class="ds-count count-blue">${src1.length}</span></div>
+        ${mkTableHTML(src1,[],false,'j1-'+idx,4)}
+      </div>
+      <div class="join-icon-col">
+        <div style="font-size:20px;color:#BFDBFE">${jicon}</div>
+        <div class="join-type-lbl">${jlabel}</div>
+        <div style="font-size:9px;color:#94A3B8;margin-top:2px;text-align:center;max-width:60px">${step.joinOn||''}</div>
+      </div>
+      <div class="data-section">
+        <div class="ds-label">📋 ${t2} <span class="ds-count count-blue">${src2.length}</span></div>
+        ${mkTableHTML(src2,[],false,'j2-'+idx,4)}
+      </div>
+    </div>
+    <div class="join-result-arrow">↓ ${jlabel} résultat</div>
+    <div class="data-section">
+      <div class="ds-label">✅ ${step.itabVar||'lt_join'} <span class="ds-count count-green">${res.length} lignes</span></div>
+      ${mkTableHTML(res,[],false,'jres-'+idx,6)}
+    </div>
+    <div style="font-size:10px;color:#64748B;background:#F0FFF4;border:1px solid #BBF7D0;border-radius:6px;padding:6px 10px;border-left:3px solid #22C55E">
+      💡 <b>${jlabel}</b>${step.joinType==='INNER'?' — Seules les lignes correspondantes des 2 tables':' — Toutes les lignes de gauche, même sans correspondance'}
+    </div>
+  </div>`;
+  return html;
+}
+
+function renderFAEViz(step,result,idx){
+  const pilot=SESSION[step.faeItab?.toLowerCase()]||[];
+  const res=result.rows||[];
+  
+  let html=`<div class="data-section">
+    <div class="ds-label">🗂 Table pilote : ${step.faeItab} <span class="ds-count count-purple">${pilot.length}</span></div>
+    ${pilot.length?mkTableHTML(pilot,[],false,'fae-pilot-'+idx,4):'<span style="font-size:10px;color:#94A3B8">Table pilote vide ou non chargée au-dessus</span>'}
+  </div>
+  <div style="text-align:center;font-size:11px;color:#94A3B8;margin:3px 0">FOR ALL ENTRIES IN ↓</div>
+  <div class="data-section">
+    <div class="ds-label">✅ ${step.itabVar} <span class="ds-count count-green">${res.length} lignes</span></div>
+    ${mkTableHTML(res,[],false,'fae-res-'+idx,6)}
+  </div>
+  <div style="font-size:10px;color:#64748B;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;border-left:3px solid #F59E0B">
+    ⚠ <b>FOR ALL ENTRIES IN</b> — Toujours vérifier que la table pilote <b>IS NOT INITIAL</b> avant !
+  </div>`;
+  return html;
+}
+
+function renderLoopViz(step,result,idx){
+  const rows=result.rows||result.sourceRows||[];
+  const hasWhere=step.where&&step.where.length>0;
+  const nIter=rows.length;
+  
+  let html=`<div class="data-section">
+    <div class="ds-label">${hasWhere?'🔍':'🔁'} ${step.itabVar} ${hasWhere?'(WHERE '+step.where+')':''} <span class="ds-count count-purple">${rows.length} itération${rows.length!==1?'s':''}</span></div>`;
+  
+  if(!rows.length){
+    html+=`<div style="font-size:10px;color:#94A3B8;padding:8px;background:#F8FAFF;border:1px solid #E2E8F0;border-radius:6px">Table vide — LOOP ne s'exécute pas (sy-subrc = 4).</div>`;
+  } else {
+    const cols=Object.keys(rows[0]).slice(0,5);
+    html+=`<div class="dt-wrap">
+      <div class="dt-bar"><span>${step.itabVar} → ${step.loopMode==='ASSIGNING'?'&lt;fs&gt;':(step.waVar?'DATA('+step.waVar+')':'wa')}</span><span id="loop-iter-${idx}">—</span></div>
+      
+      <table class="dt"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody id="loop-body-${idx}">
+        ${rows.map((r,i)=>`<tr id="lr-${idx}-${i}">${cols.map(c=>`<td>${r[c]??'—'}</td>`).join('')}</tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="loop-ctrl">
+      <button class="lc-btn" id="loop-play-${idx}" onclick="toggleLoopAnim(${idx})">▶</button>
+      <div class="loop-prog"><div class="loop-prog-bar" id="loop-prog-${idx}" style="width:0%"></div></div>
+      <span class="loop-iter-lbl" id="loop-lbl-${idx}">0 / ${nIter}</span>
+    </div>
+    <div class="loop-wa" id="loop-wa-${idx}">sy-tabix = — · Cliquez ▶ pour démarrer la boucle</div>`;
+    
+    // ── Render body statements ──
+    if(step.body && step.body.length>0){
+      const bodySteps=parseABAP(step.body.map(b=>b.raw).join('\n'));
+      if(bodySteps.length>0){
+        html+=`<div style="margin-top:8px;padding:8px;background:#F0F4FF;border:1px solid #C7D7FE;border-radius:8px;border-left:3px solid #6366F1">
+          <div style="font-size:9px;font-weight:700;color:#4338CA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Corps de la boucle — exécuté ${rows.length} fois</div>
+          <div style="display:flex;flex-direction:column;gap:6px">`;
+        bodySteps.forEach((bs,bi)=>{
+          const br=executeStep(bs);
+          html+=renderBodyStep(bs,br,idx,bi);
+        });
+        html+=`</div></div>`;
+      }
+    }
+    
+    html+=`<div style="font-size:10px;color:#64748B;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:6px;padding:6px 10px;border-left:3px solid #7C3AED;margin-top:4px">
+      💡 Mode : <b>${step.loopMode}</b>${step.loopMode==='ASSIGNING'?' — <b>&lt;fs&gt;</b> est une référence directe, les modifications changent la table originale':' — <b>wa</b> est une copie, la table originale n\'est pas modifiée'}
+    </div>`;
+  }
+  
+  html+=`</div>`;
+  return html;
+}
+
+function renderReadViz(step,result,idx){
+  const rows=result.rows||[];
+  const foundIdx=result.foundIndex;
+  const found=result.found;
+  
+  const cols=rows.length?Object.keys(rows[0]).slice(0,5):[];
+  
+  let html=`<div class="data-section">
+    <div class="ds-label">📌 ${step.itabVar} <span class="ds-count count-blue">${rows.length} lignes</span></div>
+    <div class="dt-wrap">
+      <div class="dt-bar">
+        <span>READ TABLE ${step.readMode}</span>
+        <span>${found?'✅ Trouvé à index '+(result.tabix):'❌ Non trouvé'}</span>
+      </div>
+      
+      <table class="dt"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${rows.map((r,i)=>`<tr class="${i===foundIdx?'row-hl':i!==foundIdx&&found?'row-dim':''}">${cols.map(c=>`<td>${r[c]??'—'}</td>`).join('')}</tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+  
+  if(found&&result.foundRow){
+    const fr=result.foundRow;
+    const fk=Object.keys(fr).slice(0,4);
+    html+=`<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px;font-family:'Fira Code',monospace;font-size:10px">
+      <div style="font-size:9px;font-weight:700;color:#1D4ED8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Ligne lue → ${step.waVar||'ls'} / &lt;fs&gt;</div>
+      ${fk.map(k=>`<div><span style="color:#64748B;min-width:80px;display:inline-block">${k}</span><span style="color:#0F172A;font-weight:600">${fr[k]}</span></div>`).join('')}
+    </div>`;
+  }
+  
+  html+=`<div style="font-size:10px;color:#64748B;background:#ECFEFF;border:1px solid #A5F3FC;border-radius:6px;padding:6px 10px;border-left:3px solid #06B6D4">
+    💡 ${step.readMode==='BINARY'?'<b>BINARY SEARCH</b> — O(log n), beaucoup plus rapide sur grandes tables. <b>SORT avant !</b>':step.readMode==='INDEX'?`<b>READ TABLE INDEX ${step.readIndex}</b> — Accès direct par position (1-based).`:'<b>READ TABLE WITH KEY</b> — Recherche linéaire O(n).'}
+  </div>`;
+  
+  return html;
+}
+
+function renderInsertViz(step,result,idx){
+  const before=result.sourceRows||[];
+  const after=result.rows||[];
+  const newRow=result.newRow;
+  const cols=after.length?Object.keys(after[0]).slice(0,5):[];
+  
+  let html=`<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start">
+    <div class="data-section">
+      <div class="ds-label">Avant <span class="ds-count count-blue">${before.length}</span></div>
+      ${mkTableHTML(before,[],false,'ins-bef-'+idx,5)}
+    </div>
+    <div style="display:flex;align-items:center;padding-top:24px;color:#BFDBFE;font-size:18px">+</div>
+    <div class="data-section">
+      <div class="ds-label">Après <span class="ds-count count-green">${after.length}</span></div>
+      ${mkTableHTML(after,[newRow].filter(Boolean),false,'ins-aft-'+idx,6)}
+    </div>
+  </div>`;
+  
+  if(newRow){
+    const fk=Object.keys(newRow).slice(0,3);
+    html+=`<div style="background:#F0FFF4;border:1px solid #BBF7D0;border-radius:7px;padding:8px 10px;font-family:'Fira Code',monospace;font-size:10px;border-left:3px solid #22C55E">
+      ✅ <b>${step.type}</b> — ${fk.map(k=>`${k}='${newRow[k]}'`).join(' · ')}
+    </div>`;
+  }
+  return html;
+}
+
+function renderModifyViz(step,result,idx){
+  const before=result.sourceRows||[];
+  const after=result.rows||[];
+  const modIdx=result.modifiedIdx;
+  
+  let html=`<div class="data-section">
+    <div class="ds-label">✏️ ${step.itabVar||step.table?.toUpperCase()} — Modification ligne ${modIdx!=null?modIdx+1:'—'}</div>
+    <div class="dt-wrap">
+      <div class="dt-bar"><span>MODIFY / UPDATE</span><span>Ligne ${modIdx!=null?modIdx+1:'?'} modifiée</span></div>
+      ${mkTableRaw(after,modIdx,'ru',5)}
+    </div>
+  </div>
+  <div style="font-size:10px;color:#64748B;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;border-left:3px solid #F59E0B">
+    💡 <b>MODIFY</b> (itab) = modifie par INDEX ou FIELD-SYMBOL. <b>UPDATE</b> (DB) = modifie en base selon clé primaire.
+  </div>`;
+  return html;
+}
+
+function renderDeleteViz(step,result,idx){
+  const before=result.sourceRows||[];
+  const after=result.rows||[];
+  const delIdx=result.deletedIdx;
+  
+  let html=`<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start">
+    <div class="data-section">
+      <div class="ds-label">Avant <span class="ds-count count-blue">${before.length}</span></div>
+      ${mkTableRaw(before,delIdx,'rd2',5)}
+    </div>
+    <div style="display:flex;align-items:center;padding-top:24px;color:#FCA5A5;font-size:18px">→</div>
+    <div class="data-section">
+      <div class="ds-label">Après <span class="ds-count count-red">${after.length}</span></div>
+      ${mkTableHTML(after,[],false,'del-aft-'+idx,5)}
+    </div>
+  </div>`;
+  return html;
+}
+
+function renderSortViz(step,result,idx){
+  const before=result.sourceRows||[];
+  const after=result.rows||[];
+  
+  let html=`<div style="display:flex;flex-direction:column;gap:6px">
+    <div class="data-section">
+      <div class="ds-label">Avant SORT <span class="ds-count count-blue">${before.length}</span></div>
+      ${mkTableHTML(before,[],false,'sort-bef-'+idx,5)}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+      <div style="flex:1;height:1px;background:#DDD6FE"></div>
+      <span style="font-size:10px;font-weight:700;color:#7C3AED;font-family:'Fira Code',monospace;white-space:nowrap">⇅ SORT BY ${(step.byFields||[]).join(', ')}</span>
+      <div style="flex:1;height:1px;background:#DDD6FE"></div>
+    </div>
+    <div class="data-section">
+      <div class="ds-label">Après SORT ↑ <span class="ds-count count-purple">${after.length}</span></div>
+      ${mkTableHTML(after,[],false,'sort-aft-'+idx,5)}
+    </div>
+  </div>`;
+  return html;
+}
+
+function renderIfViz(step,result,idx){
+  const conditions=[
+    {label:`IF ${step.condition}`,result:'VRAI',active:true,color:'#22C55E'},
+    {label:`ELSEIF autre_cond`,result:'—',active:false,color:'#94A3B8'},
+    {label:`ELSE`,result:'—',active:false,color:'#94A3B8'},
+  ];
+  
+  let html=`<div class="branches">
+    ${conditions.map(c=>`<div class="branch-row ${c.active?'active':''}">
+      <span class="branch-kw">${c.label.split(' ')[0]}</span>
+      <span style="color:#64748B;font-size:10px">${c.label.slice(c.label.indexOf(' ')+1)}</span>
+      <span class="branch-active-mark">${c.active?'◀ actif':''}</span>
+    </div>`).join('')}
+  </div>
+  <div style="font-size:10px;color:#64748B;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 10px;border-left:3px solid #F59E0B;margin-top:6px">
+    💡 <b>IF</b> — La condition est évaluée à l'exécution. Préférez <b>COND #(...)</b> pour les expressions inline en ABAP 7.40+.
+  </div>`;
+  return html;
+}
+
+function renderCaseViz(step,result,idx){
+  const whens=['FERT','ROH','HALB','OTHERS'];
+  const active=Math.floor(Math.random()*3);
+  
+  let html=`<div style="font-size:10px;font-weight:700;color:#475569;margin-bottom:6px;font-family:'Fira Code',monospace">CASE ${step.variable}</div>
+  <div class="branches">
+    ${whens.map((w,i)=>`<div class="branch-row ${i===active?'active':''}">
+      <span class="branch-kw">${w==='OTHERS'?'WHEN OTHERS':'WHEN'}</span>
+      <span style="color:#059669;font-size:10px">${w!=='OTHERS'?"'"+w+"'":'—'}</span>
+      <span class="branch-active-mark">${i===active?'◀ branch active':''}</span>
+    </div>`).join('')}
+  </div>`;
+  return html;
+}
+
+function renderDoViz(step,result,idx){
+  const n=Math.min(step.times||5,8);
+  let html=`<div style="font-size:10px;font-weight:700;color:#475569;margin-bottom:6px;font-family:'Fira Code',monospace">DO ${n} TIMES</div>
+  <div style="display:flex;flex-direction:column;gap:3px">
+    ${Array.from({length:n},(_,i)=>{
+      const isSkipped=i===2; // CHECK example
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:6px;border:1px solid ${isSkipped?'#FDE68A':'#E2E8F0'};background:${isSkipped?'#FFFBEB':'#F8FAFF'};font-family:'Fira Code',monospace;font-size:10px">
+        <span style="color:${isSkipped?'#D97706':'#3B82F6'};font-weight:700;min-width:20px">${i+1}</span>
+        <span style="color:#64748B">sy-index = ${i+1}</span>
+        ${isSkipped?'<span style="margin-left:auto;color:#D97706;font-weight:600;font-size:9px">CHECK → SKIP</span>':'<span style="margin-left:auto;color:#059669;font-size:9px">✓ exécuté</span>'}
+      </div>`;
+    }).join('')}
+  </div>`;
+  return html;
+}
+
+function renderBodyStep(step,result,parentIdx,bodyIdx){
+  const badge=TYPE_COLORS[step.type]||'badge-select';
+  const uid=`b-${parentIdx}-${bodyIdx}`;
+  
+  let html=`<div style="background:#fff;border:1px solid #C7D7FE;border-radius:8px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:#EEF2FF;border-bottom:1px solid #C7D7FE">
+      <span style="font-size:8px;color:#818CF8;font-family:'Fira Code',monospace;font-weight:700">BODY</span>
+      <span class="sc-badge ${badge}" style="font-size:8px;padding:2px 6px">${step.type}</span>`;
+  
+  if(step.type==='READ'){
+    html+=`<span class="sc-itab-name" style="font-size:10px">${step.itabVar}</span>`;
+    html+=`<span class="sc-arrow">·</span><span style="font-size:9px;color:#0E7490;font-family:'Fira Code',monospace">${step.readMode}</span>`;
+  } else if(step.type==='IF'){
+    html+=`<span style="font-family:'Fira Code',monospace;font-size:9px;color:#92400E">IF ${step.condition}</span>`;
+  } else if(step.type==='WRITE'){
+    html+=`<span style="font-family:'Fira Code',monospace;font-size:9px;color:#475569">WRITE</span>`;
+  } else if(step.type==='MODIFY'||step.type==='UPDATE'){
+    html+=`<span class="sc-itab-name" style="font-size:10px">${step.itabVar||step.table||''}</span>`;
+  } else {
+    html+=`<span style="font-family:'Fira Code',monospace;font-size:9px;color:#475569">${step.description||''}</span>`;
+  }
+  
+  html+=`<span style="font-size:9px;color:#6366F1;margin-left:auto;font-family:'Fira Code',monospace">× n itérations</span></div>`;
+  
+  // Mini body viz
+  html+=`<div style="padding:8px 10px">`;
+  
+  if(step.type==='READ'){
+    const rows=result.rows||[];
+    const foundIdx=result.foundIndex;
+    const found=result.found;
+    const cols=rows.length?Object.keys(rows[0]).slice(0,4):[];
+    
+    html+=`<div style="font-size:9px;color:#64748B;margin-bottom:5px">
+      Recherche dans <b>${step.itabVar}</b> ${step.readKey?`— clé: <code style="background:#F1F5F9;padding:1px 4px;border-radius:3px">${step.readKey}</code>`:''}
+    </div>`;
+    
+    if(rows.length){
+      html+=`<div class="dt-wrap">
+        <div class="dt-bar" style="font-size:8px">
+          <span>${step.readMode==='BINARY'?'BINARY SEARCH':'WITH KEY'}</span>
+          <span>${found?`✅ sy-subrc=0, sy-tabix=${result.tabix}`:'❌ sy-subrc=4'}</span>
+        </div>
+        <table class="dt"><thead><tr>${cols.map(c=>`<th style="font-size:8px">${c}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${rows.slice(0,5).map((r,i)=>`<tr class="${i===foundIdx?'row-hl':found&&i!==foundIdx?'row-dim':''}">${cols.map(c=>`<td style="font-size:9px">${r[c]??'—'}</td>`).join('')}</tr>`).join('')}
+          ${rows.length>5?`<tr><td colspan="${cols.length}" style="text-align:center;color:#94A3B8;font-size:8px;padding:3px">+${rows.length-5} lignes...</td></tr>`:''}
+        </tbody></table>
+      </div>`;
+      
+      if(found&&result.foundRow){
+        const fr=result.foundRow;
+        const fk=Object.keys(fr).slice(0,3);
+        html+=`<div style="margin-top:5px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:5px;padding:6px 8px;font-family:'Fira Code',monospace;font-size:9px">
+          <span style="color:#1D4ED8;font-weight:600">→ ${step.waVar||'ls_hdr'}</span>: ${fk.map(k=>`<span style="color:#64748B">${k}</span>=<span style="color:#059669;font-weight:600">'${fr[k]}'</span>`).join(' · ')}
+        </div>`;
+      }
+    }
+    
+    html+=`<div style="margin-top:5px;font-size:9px;color:#64748B;background:#ECFEFF;border-left:2px solid #06B6D4;padding:4px 7px;border-radius:0 4px 4px 0">
+      💡 ${step.readMode==='BINARY'?'BINARY SEARCH O(log n) — SORT obligatoire avant la boucle':'WITH KEY O(n) — recherche séquentielle'}
+    </div>`;
+    
+  } else if(step.type==='IF'){
+    html+=`<div style="display:flex;flex-direction:column;gap:3px">
+      <div style="padding:4px 8px;border-radius:5px;border:1px solid #FDE68A;background:#FFFBEB;font-family:'Fira Code',monospace;font-size:9px;display:flex;align-items:center;gap:6px">
+        <span style="color:#3B82F6;font-weight:600">IF</span>
+        <span style="color:#64748B">${step.condition}</span>
+        <span style="margin-left:auto;font-size:8px;color:#D97706;font-weight:600">évalué × n</span>
+      </div>
+      <div style="padding:4px 8px;border-radius:5px;border:1px solid #E2E8F0;background:#F8FAFF;font-family:'Fira Code',monospace;font-size:9px;display:flex;align-items:center;gap:6px">
+        <span style="color:#3B82F6;font-weight:600">ELSE</span>
+        <span style="color:#94A3B8">branche alternative</span>
+      </div>
+    </div>`;
+  } else {
+    html+=`<div style="font-family:'Fira Code',monospace;font-size:9px;color:#475569;padding:3px 0">${syntaxHL(step.snippet||step.raw||'')}</div>`;
+  }
+  
+  html+=`</div></div>`;
+  return html;
+}
+
+
+function mkTableHTML(rows,highlightRows,highlightAll,id,_unused){
+  if(!rows||!rows.length) return '<div style="font-size:10px;color:#94A3B8;padding:6px;background:#F8FAFF;border:1px solid #E2E8F0;border-radius:6px">Aucune donnée</div>';
+  const cols=Object.keys(rows[0]).slice(0,6);
+  const hlSet=new Set((highlightRows||[]).map(r=>JSON.stringify(r)));
+  return `<div class="dt-wrap">
+    <div class="dt-bar"><span style="font-family:'Fira Code',monospace;font-size:9px;color:#94A3B8">${id}</span><span style="font-weight:700;color:#1D4ED8">${rows.length} ligne${rows.length!==1?'s':''}</span></div>
+    <table class="dt"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map((r,i)=>{
+      const isHL=highlightAll==='all'||hlSet.has(JSON.stringify(r));
+      return `<tr class="${isHL?'row-new':''}" style="animation-delay:${Math.min(i,15)*30}ms">${cols.map(c=>`<td>${r[c]??'—'}</td>`).join('')}</tr>`;
+    }).join('')}</tbody></table>
+  </div>`;
+}
+
+function mkTableRaw(rows,highlightIdx,hlClass,_unused){
+  if(!rows||!rows.length) return '<div style="font-size:10px;color:#94A3B8;padding:6px;background:#F8FAFF;border:1px solid #E2E8F0;border-radius:6px">Aucune donnée</div>';
+  const cols=Object.keys(rows[0]).slice(0,6);
+  return `<div class="dt-wrap">
+    <table class="dt"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr class="${i===highlightIdx?hlClass:''}">${cols.map(c=>`<td>${r[c]??'—'}</td>`).join('')}</tr>`).join('')}</tbody></table>
+  </div>`;
+}
+
+// ── LOOP animation ──
+const loopAnimStates={};
+
+function startLoopAnim(card,result,idx){
+  loopAnimStates[idx]={running:false,current:0,rows:result.rows||[],timer:null};
+}
+
+function toggleLoopAnim(idx){
+  const state=loopAnimStates[idx];
+  if(!state)return;
+  
+  const playBtn=document.getElementById(`loop-play-${idx}`);
+  
+  if(state.running){
+    clearInterval(state.timer);
+    state.running=false;
+    if(playBtn)playBtn.textContent='▶';
+    return;
+  }
+  
+  state.running=true;
+  if(playBtn)playBtn.textContent='⏸';
+  state.current=0;
+  
+  // Reset all rows
+  state.rows.forEach((_,i)=>{
+    const tr=document.getElementById(`lr-${idx}-${i}`);
+    if(tr)tr.className='';
+  });
+  
+  state.timer=setInterval(()=>{
+    const i=state.current;
+    const rows=state.rows;
+    
+    // Mark previous done
+    if(i>0){
+      const prev=document.getElementById(`lr-${idx}-${i-1}`);
+      if(prev)prev.className='row-done';
+    }
+    
+    if(i>=rows.length){
+      clearInterval(state.timer);
+      state.running=false;
+      if(playBtn)playBtn.textContent='▶';
+      
+      const waEl=document.getElementById(`loop-wa-${idx}`);
+      if(waEl)waEl.innerHTML=`✅ ENDLOOP — ${rows.length} itération${rows.length!==1?'s':''} complétée${rows.length!==1?'s':''} · sy-subrc = 0`;
+      const prog=document.getElementById(`loop-prog-${idx}`);
+      if(prog)prog.style.width='100%';
+      return;
+    }
+    
+    // Highlight current row and scroll it into view within its container
+    const tr=document.getElementById(`lr-${idx}-${i}`);
+    if(tr){
+      tr.className='row-processing';
+      tr.scrollIntoView({block:'nearest',behavior:'smooth'});
+    }
+    
+    // Update WA display
+    const row=rows[i];
+    const waEl=document.getElementById(`loop-wa-${idx}`);
+    if(waEl&&row){
+      const k=Object.keys(row).slice(0,3);
+      waEl.innerHTML=`<span style="color:#F59E0B;font-weight:600">sy-tabix = ${i+1}</span> · ${k.map(key=>`<span style="color:#1D4ED8">${key}</span>='<span style="color:#059669">${row[key]}</span>'`).join(' · ')}`;
+    }
+    
+    // Progress
+    const prog=document.getElementById(`loop-prog-${idx}`);
+    if(prog)prog.style.width=((i+1)/rows.length*100)+'%';
+    
+    const lbl=document.getElementById(`loop-lbl-${idx}`);
+    if(lbl)lbl.textContent=`${i+1} / ${rows.length}`;
+    
+    state.current++;
+  },600);
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN ANALYSIS
+// ═══════════════════════════════════════════════════════
+
+async function runAnalysis(){
+  const code=document.getElementById('code-input').value.trim();
+  if(!code){
+    setStatus('','Prêt');
+    return;
+  }
+  
+  clearTimeout(debTimer);
+  setStatus('thinking','Analyse...');
+  
+  const runBtn=document.getElementById('run-btn');
+  runBtn.classList.add('loading');
+  runBtn.innerHTML='<div class="think-spinner" style="width:12px;height:12px;border-width:2px"></div> Analyse...';
+  
+  // Show thinking state
+  const content=document.getElementById('vp-content');
+  document.getElementById('empty-state').style.display='none';
+  document.querySelectorAll('.step-card').forEach(e=>e.remove());
+  document.getElementById('thinking-state').style.display='flex';
+  document.getElementById('vp-steps-count').classList.add('hidden');
+  
+  // Parse locally (instant)
+  const steps=parseABAP(code);
+  
+  // Small delay for UX feel
+  await new Promise(r=>setTimeout(r,400));
+  
+  document.getElementById('thinking-state').style.display='none';
+  
+  // Reset session
+  Object.keys(SESSION).forEach(k=>delete SESSION[k]);
+  
+  renderAllSteps(steps);
+  
+  setStatus('ok',`${steps.length} étape${steps.length!==1?'s':''} analysée${steps.length!==1?'s':''}`);
+  runBtn.classList.remove('loading');
+  runBtn.innerHTML='<span>▶</span> Analyser';
+}
+
+// Use Claude API for enhanced analysis
+async function analyzeWithClaude(code) {
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: `You are an ABAP execution analyzer. Return ONLY a JSON array of execution steps for the given ABAP code.
+Each step must have: { "type": "SELECT|LOOP|READ|INSERT|APPEND|MODIFY|UPDATE|DELETE|IF|CASE|SORT|DO", "table": "db_table_or_null", "itabVar": "variable_name", "fields": ["*"], "where": "condition_string", "joinType": "INNER|LEFT_OUTER|FAE|null", "joinTable": "null_or_table", "readMode": "INDEX|KEY|BINARY|null", "readIndex": null, "readKey": "condition", "loopMode": "INTO|ASSIGNING", "snippet": "the_code_lines", "description": "brief_french_description" }
+Return ONLY the JSON array. No markdown fences.`,
+        messages: [{ role: "user", content: code }]
+      })
+    });
+    const data = await response.json();
+    if(data.content?.[0]?.text) {
+      const text = data.content[0].text.replace(/```json|```/g,'').trim();
+      return JSON.parse(text);
+    }
+  } catch(e) { /* fallback to local parser */ }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+// SNIPPETS
+// ═══════════════════════════════════════════════════════
+
+const SNIPPETS = {
+  select_where: `SELECT matnr maktx mtart menge
+  FROM mara
+  INTO TABLE @DATA(lt_mara)
+  WHERE mtart = 'FERT'
+    AND menge > 0
+  ORDER BY menge DESCENDING
+  UP TO 5 ROWS.`,
+
+  inner_join: `SELECT e~ebeln e~bukrs e~lifnr
+       p~ebelp p~matnr p~menge p~netpr
+  FROM ekko AS e
+  INNER JOIN ekpo AS p
+    ON p~ebeln = e~ebeln
+  INTO TABLE @DATA(lt_result)
+  WHERE e~bukrs = '1000'.`,
+
+  fae: `" Étape 1 : Charger la table pilote
+SELECT * FROM ekko
+  INTO TABLE @DATA(lt_ekko)
+  WHERE bukrs = '1000'.
+
+" Étape 2 : FOR ALL ENTRIES
+IF lt_ekko IS NOT INITIAL.
+  SELECT * FROM ekpo
+    INTO TABLE @DATA(lt_ekpo)
+    FOR ALL ENTRIES IN @lt_ekko
+    WHERE ebeln = @lt_ekko-ebeln.
+ENDIF.`,
+
+  loop_read: `" Sélection initiale
+SELECT * FROM ekpo
+  INTO TABLE @DATA(lt_ekpo).
+
+" Trier avant BINARY SEARCH
+SORT lt_ekpo BY ebeln.
+
+" Boucle avec READ TABLE
+LOOP AT lt_ekpo INTO DATA(ls_po).
+  READ TABLE lt_ekko
+    WITH KEY ebeln = ls_po-ebeln
+    INTO DATA(ls_hdr)
+    BINARY SEARCH.
+  IF sy-subrc = 0.
+    WRITE: / ls_hdr-lifnr, ls_po-matnr.
+  ENDIF.
+ENDLOOP.`,
+
+  crud: `" === CRUD COMPLET ===
+" 1. SELECT
+SELECT * FROM mara
+  INTO TABLE @DATA(lt_mara)
+  WHERE mtart = 'ROH'.
+
+" 2. MODIFY via LOOP ASSIGNING
+LOOP AT lt_mara
+  ASSIGNING FIELD-SYMBOL(<ls>)
+  WHERE menge = 0.
+  <ls>-menge = 10.
+ENDLOOP.
+
+" 3. INSERT nouvelle ligne
+APPEND VALUE #(
+  matnr = 'M999'
+  maktx = 'Nouveau'
+  mtart = 'FERT'
+  menge = 100 ) TO lt_mara.
+
+" 4. DELETE doublons
+SORT lt_mara BY mtart.
+DELETE ADJACENT DUPLICATES
+  FROM lt_mara
+  COMPARING mtart.
+
+" 5. READ TABLE résultat
+READ TABLE lt_mara
+  WITH KEY matnr = 'M999'
+  INTO DATA(ls_new).`,
+
+  control: `" === CONTROL FLOW ===
+SELECT * FROM mara
+  INTO TABLE @DATA(lt_mara)
+  UP TO 6 ROWS.
+
+" IF / ELSEIF
+LOOP AT lt_mara INTO DATA(ls).
+  IF ls-menge > 100.
+    WRITE: / 'Stock élevé'.
+  ELSEIF ls-menge > 0.
+    WRITE: / 'Stock faible'.
+  ELSE.
+    WRITE: / 'Rupture!'.
+  ENDIF.
+
+  " CASE
+  CASE ls-mtart.
+    WHEN 'FERT'.
+      WRITE: / 'Produit fini'.
+    WHEN 'ROH'.
+      WRITE: / 'Matière'.
+    WHEN OTHERS.
+      WRITE: / 'Autre'.
+  ENDCASE.
+ENDLOOP.
+
+" DO n TIMES
+DO 5 TIMES.
+  CHECK sy-index <> 3.
+  WRITE: / sy-index.
+ENDDO.`
+};
+
+function loadSnippet(key){
+  const code=SNIPPETS[key]||'';
+  const ta=document.getElementById('code-input');
+  ta.value=code;
+  onCodeInput();
+  setTimeout(()=>runAnalysis(),200);
+}
+
+// ═══════════════════════════════════════════════════════
+// DB MODAL
+// ═══════════════════════════════════════════════════════
+
+function showDB(){
+  const modal=document.getElementById('db-modal');
+  const content=document.getElementById('db-modal-content');
+  
+  const tables=['mara','ekko','ekpo','kna1','vbak','vbap','bkpf'];
+  content.innerHTML=tables.map(t=>{
+    const rows=DB[t]||[];
+    const meta=TABLE_META[t];
+    const cols=meta.fields;
+    const display=rows.slice(0,5);
+    return `<div class="db-table-section">
+      <div class="db-table-name">📋 ${meta.label} — ${rows.length} lignes</div>
+      <div class="dt-wrap">
+        <table class="dt"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${display.map(r=>`<tr>${cols.map(c=>`<td>${r[c]??'—'}</td>`).join('')}</tr>`).join('')}
+          ${rows.length>5?`<tr><td colspan="${cols.length}" style="text-align:center;color:#94A3B8;font-size:9px;padding:4px">+${rows.length-5} autres...</td></tr>`:''}
+        </tbody></table>
+      </div>
+    </div>`;
+  }).join('');
+  
+  modal.classList.add('show');
+}
+
+function closeDB(){
+  document.getElementById('db-modal').classList.remove('show');
+}
+
+document.getElementById('db-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('db-modal')) closeDB();
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+
+// Load default snippet
+window.addEventListener('load',()=>{
+  loadSnippet('select_where');
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='Enter'){
+    e.preventDefault();
+    runAnalysis();
+  }
+});
+</script>
+</body>
+</html>
